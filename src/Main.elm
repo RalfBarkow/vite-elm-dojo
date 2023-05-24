@@ -61,7 +61,7 @@ update msg model =
 
         SubmitClicked ->
             let
-                request =
+                _ =
                     { body =
                         Http.jsonBody <|
                             Encode.object
