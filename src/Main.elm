@@ -1,112 +1,78 @@
-module Main exposing (main)
-
--- Input a user name and password.
---
--- Read how it works:
---   https://guide.elm-lang.org/architecture/forms.html
---
+module Main exposing (..)
 
 import Browser
-import Debug
 import Html exposing (Html, button, div, form, input, text)
 import Html.Attributes exposing (placeholder, type_)
 import Html.Events exposing (onClick, onInput)
 import Http
-import Json.Decode as Json
-import Json.Encode as Encode
 
 
-
--- Define the model
+-- Model
 
 
 type alias Model =
-    { username : String
-    , password : String
+    { reclaimCode : String
     , response : String
+    , isAuthenticated : Bool
     }
 
 
 initialModel : Model
 initialModel =
-    { username = ""
-    , password = ""
+    { reclaimCode = ""
     , response = ""
+    , isAuthenticated = False
     }
 
 
-
--- Define the Msg type
+-- Msg
 
 
 type Msg
-    = UsernameChanged String
-    | PasswordChanged String
+    = ReclaimCodeChanged String
     | SubmitClicked
-    | RequestCompleted (Result Http.Error String)
 
 
-
--- Define the update function
+-- Update
 
 
 update : Msg -> Model -> Model
 update msg model =
     case msg of
-        UsernameChanged newUsername ->
-            { model | username = newUsername }
-
-        PasswordChanged newPassword ->
-            { model | password = newPassword }
+        ReclaimCodeChanged newReclaimCode ->
+            { model | reclaimCode = newReclaimCode }
 
         SubmitClicked ->
             let
-                request =
-                    { body =
-                        Http.jsonBody <|
-                            Encode.object
-                                [ ( "username", Encode.string model.username )
-                                , ( "password", Encode.string model.password )
-                                ]
-                    , expect = Http.expectString RequestCompleted
-                    , url = "https://your-server.com/login" -- Replace with your server URL
+                reclaimCode = model.reclaimCode
+                _ =
+                    { url = "/auth/reclaim/"
+                    , body = Http.stringBody "text/plain" reclaimCode
+                    , expect = Http.expectStringResponse 
                     }
             in
-            { model | response = "Sending request..." }
+            ({model | isAuthenticated = False})
 
-        RequestCompleted result ->
-            case result of
-                Ok response ->
-                    { model | response = "Request completed: " ++ response }
+        
 
-                Err error ->
-                    { model | response = "Request failed: " ++ Debug.toString error }
-
-
-
--- Define the view function
+-- View
 
 
 view : Model -> Html Msg
 view model =
     div []
         [ form []
-            [ input [ placeholder "Username", type_ "text", onInput UsernameChanged ] []
-            , input [ placeholder "Password", type_ "password", onInput PasswordChanged ] []
+            [ input [ placeholder "Reclaim Code", type_ "password", onInput ReclaimCodeChanged ] []
             , button [ onClick SubmitClicked ] [ text "Submit" ]
             ]
         , text model.response
         ]
 
 
-
--- Start the Elm application
+-- Main
 
 
 main : Program () Model Msg
 main =
-    Browser.sandbox
-        { init = initialModel
-        , update = update
-        , view = view
-        }
+    Browser.sandbox { init = initialModel, update = update, view = view }
+
