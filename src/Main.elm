@@ -19,7 +19,7 @@ view model =
             text "loading..."
 
         Failure ->
-            text "failed to fetch new cat image"
+            text "failed to fetch wiki json"
 
         Success wikiJson ->
             text  wikiJson
