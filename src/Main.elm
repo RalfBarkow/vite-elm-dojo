@@ -30,7 +30,7 @@ fetchCatImageUrl : Cmd Msg
 fetchCatImageUrl =
     Http.get
         { url = "https://wiki.ralfbarkow.ch/2023-05-27.json"
-        , expect = Http.expectJson GotResult (field "file" string)
+        , expect = Http.expectJson GotResult (field "title" string)
         }
 
 
