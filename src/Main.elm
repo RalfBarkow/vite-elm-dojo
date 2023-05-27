@@ -1,10 +1,11 @@
 module Main exposing (main)
 
 import Browser
-import Html exposing (Html, img, text)
+import Html exposing (Html, pre, text)
 import Html.Attributes exposing (src)
 import Http
 import Json.Decode exposing (Decoder, field, string)
+import Html exposing (pre)
 
 
 type Model
@@ -22,8 +23,8 @@ view model =
         Failure ->
             text "failed to fetch new cat image"
 
-        Success imageUrl ->
-            img [ src imageUrl ] []
+        Success wikiJson ->
+            text  wikiJson
 
 
 fetchWikiJson : Cmd Msg
