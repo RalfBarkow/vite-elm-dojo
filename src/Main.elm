@@ -1,78 +1,64 @@
-module Main exposing (..)
+module Main exposing (main)
 
 import Browser
-import Html exposing (Html, button, div, form, input, text)
-import Html.Attributes exposing (placeholder, type_)
-import Html.Events exposing (onClick, onInput)
+import Html exposing (Html, img, text)
+import Html.Attributes exposing (src)
 import Http
+import Json.Decode exposing (Decoder, field, string)
 
 
--- Model
-
-
-type alias Model =
-    { reclaimCode : String
-    , response : String
-    , isAuthenticated : Bool
-    }
-
-
-initialModel : Model
-initialModel =
-    { reclaimCode = ""
-    , response = ""
-    , isAuthenticated = False
-    }
-
-
--- Msg
-
-
-type Msg
-    = ReclaimCodeChanged String
-    | SubmitClicked
-
-
--- Update
-
-
-update : Msg -> Model -> Model
-update msg model =
-    case msg of
-        ReclaimCodeChanged newReclaimCode ->
-            { model | reclaimCode = newReclaimCode }
-
-        SubmitClicked ->
-            let
-                reclaimCode = model.reclaimCode
-                _ =
-                    { url = "/auth/reclaim/"
-                    , body = Http.stringBody "text/plain" reclaimCode
-                    , expect = Http.expectStringResponse 
-                    }
-            in
-            ({model | isAuthenticated = False})
-
-        
-
--- View
+type Model
+    = Loading
+    | Failure
+    | Success String
 
 
 view : Model -> Html Msg
 view model =
-    div []
-        [ form []
-            [ input [ placeholder "Reclaim Code", type_ "password", onInput ReclaimCodeChanged ] []
-            , button [ onClick SubmitClicked ] [ text "Submit" ]
-            ]
-        , text model.response
-        ]
+    case model of
+        Loading ->
+            text "loading..."
+
+        Failure ->
+            text "failed to fetch new cat image"
+
+        Success imageUrl ->
+            img [ src imageUrl ] []
 
 
--- Main
+fetchCatImageUrl : Cmd Msg
+fetchCatImageUrl =
+    Http.get
+        { url = "https://aws.random.cat/meow"
+        , expect = Http.expectJson GotResult (field "file" string)
+        }
 
 
-main : Program () Model Msg
+init : () -> ( Model, Cmd Msg )
+init _ =
+    ( Loading, fetchCatImageUrl )
+
+
+type Msg
+    = GotResult (Result Http.Error String)
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
+        GotResult result ->
+            case result of
+                Ok imageUrl ->
+                    ( Success imageUrl, Cmd.none )
+
+                Err _ ->
+                    ( Failure, Cmd.none )
+
+
 main =
-    Browser.sandbox { init = initialModel, update = update, view = view }
-
+    Browser.element
+        { init = init
+        , update = update
+        , subscriptions = \_ -> Sub.none
+        , view = view
+        }
