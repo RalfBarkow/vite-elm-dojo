@@ -5,13 +5,13 @@ import Html exposing (Html, text)
 import Http
 import Json.Decode exposing (field, string)
 
-
+-- MODEL
 type Model
     = Loading
     | Failure
     | Success String
 
-
+-- VIEW
 view : Model -> Html Msg
 view model =
     case model of
@@ -37,23 +37,23 @@ init : () -> ( Model, Cmd Msg )
 init _ =
     ( Loading, fetchWikiJson )
 
-
+-- MESSAGE
 type Msg
     = GotResult (Result Http.Error String)
 
-
+-- UPDATE
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         GotResult result ->
             case result of
-                Ok imageUrl ->
-                    ( Success imageUrl, Cmd.none )
+                Ok wikiJson ->
+                    ( Success wikiJson, Cmd.none )
 
                 Err _ ->
                     ( Failure, Cmd.none )
 
-
+-- MAIN
 main =
     Browser.element
         { init = init
