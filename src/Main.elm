@@ -26,8 +26,8 @@ view model =
             img [ src imageUrl ] []
 
 
-fetchCatImageUrl : Cmd Msg
-fetchCatImageUrl =
+fetchWikiJson : Cmd Msg
+fetchWikiJson =
     Http.get
         { url = "https://wiki.ralfbarkow.ch/2023-05-27.json"
         , expect = Http.expectJson GotResult (field "title" string)
@@ -36,7 +36,7 @@ fetchCatImageUrl =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( Loading, fetchCatImageUrl )
+    ( Loading, fetchWikiJson )
 
 
 type Msg
