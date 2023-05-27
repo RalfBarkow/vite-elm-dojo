@@ -29,7 +29,7 @@ view model =
 fetchCatImageUrl : Cmd Msg
 fetchCatImageUrl =
     Http.get
-        { url = "https://aws.random.cat/meow"
+        { url = "https://wiki.ralfbarkow.ch/2023-05-27.json"
         , expect = Http.expectJson GotResult (field "file" string)
         }
 
