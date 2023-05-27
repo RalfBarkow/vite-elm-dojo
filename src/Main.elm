@@ -1,11 +1,9 @@
 module Main exposing (main)
 
 import Browser
-import Html exposing (Html, pre, text)
-import Html.Attributes exposing (src)
+import Html exposing (Html, text)
 import Http
-import Json.Decode exposing (Decoder, field, string)
-import Html exposing (pre)
+import Json.Decode exposing (field, string)
 
 
 type Model
