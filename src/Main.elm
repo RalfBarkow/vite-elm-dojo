@@ -1,66 +1,139 @@
 module Main exposing (main)
+-- Press a button to send a GET request for random quotes.
+--
+-- Read how it works:
+--   https://guide.elm-lang.org/effects/json.html
+--
 
 import Browser
-import Html exposing (Html, text)
+import Html exposing (..)
+import Html.Attributes exposing (style)
+import Html.Events exposing (..)
 import Http
-import Json.Decode exposing (Decoder, field, string, decodeValue, succeed, at)
-
--- MODEL
-type Model
-    = Loading
-    | Failure
-    | Success String
-
--- VIEW
-view : Model -> Html Msg
-view model =
-    case model of
-        Loading ->
-            text "loading..."
-
-        Failure ->
-            text "failed to fetch wiki json"
-
-        Success wikiJson ->
-            text wikiJson
+import Json.Decode exposing (Decoder, map4, field, int, string)
 
 
-fetchWikiJson : Cmd Msg
-fetchWikiJson =
-    Http.get
-        { url = "https://wiki.ralfbarkow.ch/2023-05-27.json"
-        , expect = Http.expectJson GotResult wikiJsonDecoder
-        }
-
-wikiJsonDecoder : Decoder String
-wikiJsonDecoder =
-    field "title" string
-
-init : () -> ( Model, Cmd Msg )
-init _ =
-    ( Loading, fetchWikiJson )
-
--- MESSAGE
-type Msg
-    = GotResult (Result Http.Error String)
-
--- UPDATE
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-    case msg of
-        GotResult result ->
-            case result of
-                Ok wikiJson ->
-                    ( Success wikiJson, Cmd.none )
-
-                Err _ ->
-                    ( Failure, Cmd.none )
 
 -- MAIN
+
+
 main =
-    Browser.element
-        { init = init
-        , update = update
-        , subscriptions = \_ -> Sub.none
-        , view = view
-        }
+  Browser.element
+    { init = init
+    , update = update
+    , subscriptions = subscriptions
+    , view = view
+    }
+
+
+
+-- MODEL
+
+
+type Model
+  = Failure
+  | Loading
+  | Success Quote
+
+
+type alias Quote =
+  { quote : String
+  , source : String
+  , author : String
+  , year : Int
+  }
+
+
+init : () -> (Model, Cmd Msg)
+init _ =
+  (Loading, getRandomQuote)
+
+
+
+-- UPDATE
+
+
+type Msg
+  = MorePlease
+  | GotQuote (Result Http.Error Quote)
+
+
+update : Msg -> Model -> (Model, Cmd Msg)
+update msg model =
+  case msg of
+    MorePlease ->
+      (Loading, getRandomQuote)
+
+    GotQuote result ->
+      case result of
+        Ok quote ->
+          (Success quote, Cmd.none)
+
+        Err _ ->
+          (Failure, Cmd.none)
+
+
+
+-- SUBSCRIPTIONS
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+  Sub.none
+
+
+
+-- VIEW
+
+
+view : Model -> Html Msg
+view model =
+  div []
+    [ h2 [] [ text "Random Quotes" ]
+    , viewQuote model
+    ]
+
+
+viewQuote : Model -> Html Msg
+viewQuote model =
+  case model of
+    Failure ->
+      div []
+        [ text "I could not load a random quote for some reason. "
+        , button [ onClick MorePlease ] [ text "Try Again!" ]
+        ]
+
+    Loading ->
+      text "Loading..."
+
+    Success quote ->
+      div []
+        [ button [ onClick MorePlease, style "display" "block" ] [ text "More Please!" ]
+        , blockquote [] [ text quote.quote ]
+        , p [ style "text-align" "right" ]
+            [ text "— "
+            , cite [] [ text quote.source ]
+            , text (" by " ++ quote.author ++ " (" ++ String.fromInt quote.year ++ ")")
+            ]
+        ]
+
+
+
+-- HTTP
+
+
+getRandomQuote : Cmd Msg
+getRandomQuote =
+  Http.get
+    { url = "https://elm-lang.org/api/random-quotes"
+    , expect = Http.expectJson GotQuote quoteDecoder
+    }
+
+
+quoteDecoder : Decoder Quote
+quoteDecoder =
+  map4 Quote
+    (field "quote" string)
+    (field "source" string)
+    (field "author" string)
+    (field "year" int)
