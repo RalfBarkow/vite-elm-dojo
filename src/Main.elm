@@ -3,7 +3,7 @@ module Main exposing (main)
 import Browser
 import Html exposing (Html, text)
 import Http
-import Json.Decode exposing (field, string)
+import Json.Decode exposing (Decoder, field, string, decodeValue, succeed, at)
 
 -- MODEL
 type Model
@@ -22,16 +22,19 @@ view model =
             text "failed to fetch wiki json"
 
         Success wikiJson ->
-            text  wikiJson
+            text wikiJson
 
 
 fetchWikiJson : Cmd Msg
 fetchWikiJson =
     Http.get
         { url = "https://wiki.ralfbarkow.ch/2023-05-27.json"
-        , expect = Http.expectJson GotResult (field "title" string)
+        , expect = Http.expectJson GotResult wikiJsonDecoder
         }
 
+wikiJsonDecoder : Decoder String
+wikiJsonDecoder =
+    field "title" string
 
 init : () -> ( Model, Cmd Msg )
 init _ =
