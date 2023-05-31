@@ -1,17 +1,12 @@
 module Main exposing (main)
--- Press a button to send a GET request for random quotes.
---
--- Read how it works:
---   https://guide.elm-lang.org/effects/json.html
---
 
 import Browser
 import Html exposing (..)
 import Html.Attributes exposing (style)
 import Html.Events exposing (..)
 import Http
-import Json.Decode exposing (Decoder, map4, field, int, string)
-
+import Json.Decode exposing (Decoder, field, string, map3)
+import Debug
 
 
 -- MAIN
@@ -33,20 +28,19 @@ main =
 type Model
   = Failure
   | Loading
-  | Success Quote
+  | Success Page
 
 
-type alias Quote =
-  { quote : String
-  , source : String
-  , author : String
-  , year : Int
+type alias Page =
+  { title : String
+  , story : String
+  , journal : String
   }
 
 
 init : () -> (Model, Cmd Msg)
 init _ =
-  (Loading, getRandomQuote)
+  (Loading, getWikiPageJson)
 
 
 
@@ -54,22 +48,43 @@ init _ =
 
 
 type Msg
-  = MorePlease
-  | GotQuote (Result Http.Error Quote)
+  = DoIt
+  | GotPage (Result Http.Error Page)
 
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
-    MorePlease ->
-      (Loading, getRandomQuote)
+    DoIt ->
+      (Loading, getWikiPageJson)
 
-    GotQuote result ->
+    GotPage result ->
       case result of
-        Ok quote ->
-          (Success quote, Cmd.none)
+        Ok page ->
+          (Success page, Cmd.none)
 
-        Err _ ->
+        Err err ->
+          let
+            errorMsg =
+              case err of
+                Http.Timeout ->
+                  "Timeout"
+
+                Http.NetworkError ->
+                  "Network Error"
+
+                Http.BadStatus status ->
+                  "Bad Status: " ++ String.fromInt status
+
+                Http.BadBody body ->
+                  let
+                    _ = Debug.log "GotPage JSON:" body -- Log the JSON content in case of Failure
+                  in
+                  "Bad Body: " ++ body
+
+                Http.BadUrl _ ->
+                  Debug.todo "Handle BadUrl case" -- Placeholder for handling BadUrl case
+          in
           (Failure, Cmd.none)
 
 
@@ -89,32 +104,27 @@ subscriptions model =
 view : Model -> Html Msg
 view model =
   div []
-    [ h2 [] [ text "Random Quotes" ]
-    , viewQuote model
+    [ h2 [] [ text "Wiki Page JSON" ]
+    , viewPage model
     ]
 
 
-viewQuote : Model -> Html Msg
-viewQuote model =
+viewPage : Model -> Html Msg
+viewPage model =
   case model of
     Failure ->
       div []
-        [ text "I could not load a random quote for some reason. "
-        , button [ onClick MorePlease ] [ text "Try Again!" ]
+        [ text "I could not load the Wiki Page JSON for some reason. "
+        , button [ onClick DoIt ] [ text "Try Again!" ]
         ]
 
     Loading ->
       text "Loading..."
 
-    Success quote ->
+    Success page ->
       div []
-        [ button [ onClick MorePlease, style "display" "block" ] [ text "More Please!" ]
-        , blockquote [] [ text quote.quote ]
-        , p [ style "text-align" "right" ]
-            [ text "— "
-            , cite [] [ text quote.source ]
-            , text (" by " ++ quote.author ++ " (" ++ String.fromInt quote.year ++ ")")
-            ]
+        [ button [ onClick DoIt, style "display" "block" ] [ text "Do it" ]
+        , blockquote [] [ text page.title ]
         ]
 
 
@@ -122,18 +132,27 @@ viewQuote model =
 -- HTTP
 
 
-getRandomQuote : Cmd Msg
-getRandomQuote =
+getWikiPageJson : Cmd Msg
+getWikiPageJson =
   Http.get
-    { url = "https://elm-lang.org/api/random-quotes"
-    , expect = Http.expectJson GotQuote quoteDecoder
+    { url = "https://wiki.ralfbarkow.ch/2023-05-31.json"
+    , expect = Http.expectJson GotPage pageDecoder
     }
 
 
-quoteDecoder : Decoder Quote
-quoteDecoder =
-  map4 Quote
-    (field "quote" string)
-    (field "source" string)
-    (field "author" string)
-    (field "year" int)
+pageDecoder : Decoder Page
+pageDecoder =
+  map3 Page
+    (field "title" string)
+    (field "story" storyDecoder)
+    (field "journal" journalDecoder)
+
+
+storyDecoder : Decoder String
+storyDecoder =
+  field "story" string |> Debug.log "Decoding story:"
+
+
+journalDecoder : Decoder String
+journalDecoder =
+  field "journal" string |> Debug.log "Decoding journal:"
