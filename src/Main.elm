@@ -65,9 +65,14 @@ decodeItem =
 
 main : Html msg
 main =
-    """
-{"title":"Create New Page Test","story":[],"journal":[{"type":"create","item":{"title":"Create New Page Test","story":[]},"date":1685640550036}]}
-"""
+    testData
         |> Decode.decodeString decodePage
         |> Debug.toString
         |> Html.text
+
+
+testData : String
+testData =
+    """
+{"title":"Create New Page Test","story":[],"journal":[{"type":"create","item":{"title":"Create New Page Test","story":[]},"date":1685640550036}]}
+"""
