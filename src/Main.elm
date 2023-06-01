@@ -1,212 +1,70 @@
 module Main exposing (main)
 
-import Browser
-import Debug
-import Html exposing (..)
-import Html.Attributes exposing (style)
-import Html.Events exposing (..)
-import Http
-import Json.Decode exposing (Decoder, field, int, list, map3, map4, string)
+import Html exposing (Html)
+import Json.Decode as Decode exposing (Decoder, field, int, list, map2, map3, string)
 
 
-
--- MAIN
-
-
-main : Program () Model Msg
-main =
-    Browser.element
-        { init = init
-        , update = update
-        , subscriptions = subscriptions
-        , view = view
-        }
-
-
-
--- MODEL
-
-
-type Model
-    = Loading
-    | Success Page
-    | Failure String
-
-
-type alias Page =
+type alias Item =
     { title : String
-    , story : List Story
-    , journal : List Journal
-    }
-
-
-type alias Story =
-    { typeOfStoryItem : String
-    , id : String
-    , text : String
+    , story : List String
     }
 
 
 type alias Journal =
-    { typeOfStoryEdit : String
-    , id : String
+    { journalType : String
     , item : Item
     , date : Int
     }
 
 
-type alias Item =
-    { typeOfJournalItem : String
-    , id : String
-    , text : String
+type alias Page =
+    { title : String
+    , story : List String
+    , journal : List Journal
     }
 
 
-init : () -> ( Model, Cmd Msg )
-init _ =
-    ( Loading, getWikiPageJson )
-
-
-
--- UPDATE
-
-
-type Msg
-    = DoIt
-    | GotPage (Result Http.Error Page)
-
-
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-    case msg of
-        DoIt ->
-            ( Loading, getWikiPageJson )
-
-        GotPage result ->
-            case result of
-                Ok page ->
-                    ( Success page, Cmd.none )
-
-                Err err ->
-                    let
-                        errorMsg =
-                            case err of
-                                Http.BadUrl _ ->
-                                    -- Placeholder for handling BadUrl case
-                                    Debug.todo "Handle BadUrl case"
-
-                                Http.Timeout ->
-                                    "Timeout"
-
-                                Http.NetworkError ->
-                                    "Network Error"
-
-                                Http.BadStatus status ->
-                                    "Bad Status: " ++ String.fromInt status
-
-                                Http.BadBody body ->
-                                    let
-                                        _ =
-                                            -- Log the JSON content in case of Failure
-                                            Debug.log "GotPage JSON:" body
-                                    in
-                                    "GotPage JSON: " ++ body
-                    in
-                    ( Failure errorMsg, Cmd.none )
-
-
-
--- SUBSCRIPTIONS
-
-
-subscriptions : Model -> Sub Msg
-subscriptions model =
-    Sub.none
-
-
-
--- VIEW
-
-
-view : Model -> Html Msg
-view model =
-    div []
-        [ h2 [] [ text "Wiki Page JSON" ]
-        , viewPage model
-        , viewError model
-        ]
-
-
-viewPage : Model -> Html Msg
-viewPage model =
-    case model of
-        Loading ->
-            text "Loading..."
-
-        Success page ->
-            div []
-                [ button [ onClick DoIt, style "display" "block" ] [ text "Do it" ]
-                , div [ style "font-weight" "bold" ] [ text page.title ]
-                ]
-
-        Failure _ ->
-            text ""
-
-
-viewError : Model -> Html Msg
-viewError model =
-    case model of
-        Failure errorMsg ->
-            div []
-                [ div [] [ text errorMsg ]
-                , text ""
-                , button [ onClick DoIt ] [ text "Try Again!" ]
-                ]
-
-        _ ->
-            text ""
-
-
-
--- HTTP
-
-
-getWikiPageJson : Cmd Msg
-getWikiPageJson =
-    Http.get
-        { url = "http://wiki.ralfbarkow.ch/elm-and-json.json"
-        , expect = Http.expectJson GotPage decodePage
-        }
+main : Html msg
+main =
+    """
+{
+  "title": "Create New Page Test",
+  "story": [],
+  "journal": [
+    {
+      "journalType": "create",
+      "item": {
+        "title": "Create New Page Test",
+        "story": []
+      },
+      "date": 1685631537021
+    }
+  ]
+}
+"""
+        |> Decode.decodeString decodePage
+        |> Debug.toString
+        |> Html.text
 
 
 decodePage : Decoder Page
 decodePage =
     map3 Page
-        (field "title" string)
-        (field "story" (list decodeStory))
-        (field "journal" (list decodeStoryEdit))
+        (Decode.field "title" Decode.string)
+        (Decode.field "story" (Decode.list Decode.string))
+        (Decode.field "journal" (Decode.list decodeJournal))
 
 
-decodeStory : Decoder Story
-decodeStory =
-    map3 Story
-        (field "type" string)
-        (field "id" string)
-        (field "text" string)
+decodeJournal : Decoder Journal
+decodeJournal =
+    map3 Journal
+        (Decode.field "journalType" Decode.string)
+        (Decode.field "item" decodeItem)
+        (Decode.field "date" Decode.int)
 
 
-decodeStoryEdit : Decoder Journal
-decodeStoryEdit =
-    map4 Journal
-        (field "type" string)
-        (field "id" string)
-        decodeJournalItem
-        (field "date" int)
-
-
-decodeJournalItem : Decoder Item
-decodeJournalItem =
-    map3 Item
-        (field "type" string)
-        (field "id" string)
-        (field "text" string)
+decodeItem : Decoder Item
+decodeItem =
+    map2 Item
+        (Decode.field "title" Decode.string)
+        (Decode.field "story" (Decode.list Decode.string))
