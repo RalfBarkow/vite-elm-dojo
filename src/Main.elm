@@ -6,7 +6,7 @@ import Html exposing (..)
 import Html.Attributes exposing (style)
 import Html.Events exposing (..)
 import Http
-import Json.Decode exposing (Decoder, field, list, map3, map4, string)
+import Json.Decode exposing (Decoder, field, int, list, map3, map4, string)
 
 
 
@@ -28,9 +28,9 @@ main =
 
 
 type Model
-    = Failure
-    | Loading
+    = Loading
     | Success Page
+    | Failure String
 
 
 type alias Page =
@@ -41,17 +41,24 @@ type alias Page =
 
 
 type alias Story =
-    { typeOfStory : String
+    { typeOfStoryItem : String
     , id : String
     , text : String
     }
 
 
 type alias Journal =
-    { typeOfJournal : String
+    { typeOfStoryEdit : String
     , id : String
-    , item : String
-    , date : String
+    , item : Item
+    , date : Int
+    }
+
+
+type alias Item =
+    { typeOfJournalItem : String
+    , id : String
+    , text : String
     }
 
 
@@ -84,6 +91,10 @@ update msg model =
                     let
                         errorMsg =
                             case err of
+                                Http.BadUrl _ ->
+                                    -- Placeholder for handling BadUrl case
+                                    Debug.todo "Handle BadUrl case"
+
                                 Http.Timeout ->
                                     "Timeout"
 
@@ -96,18 +107,12 @@ update msg model =
                                 Http.BadBody body ->
                                     let
                                         _ =
+                                            -- Log the JSON content in case of Failure
                                             Debug.log "GotPage JSON:" body
-
-                                        -- Log the JSON content in case of Failure
                                     in
-                                    "Bad Body: " ++ body
-
-                                Http.BadUrl _ ->
-                                    Debug.todo "Handle BadUrl case"
-
-                        -- Placeholder for handling BadUrl case
+                                    "GotPage JSON: " ++ body
                     in
-                    ( Failure, Cmd.none )
+                    ( Failure errorMsg, Cmd.none )
 
 
 
@@ -128,26 +133,38 @@ view model =
     div []
         [ h2 [] [ text "Wiki Page JSON" ]
         , viewPage model
+        , viewError model
         ]
 
 
 viewPage : Model -> Html Msg
 viewPage model =
     case model of
-        Failure ->
-            div []
-                [ text "I could not load the Wiki Page JSON for some reason. "
-                , button [ onClick DoIt ] [ text "Try Again!" ]
-                ]
-
         Loading ->
             text "Loading..."
 
         Success page ->
             div []
                 [ button [ onClick DoIt, style "display" "block" ] [ text "Do it" ]
-                , blockquote [] [ text page.title ]
+                , div [ style "font-weight" "bold" ] [ text page.title ]
                 ]
+
+        Failure _ ->
+            text ""
+
+
+viewError : Model -> Html Msg
+viewError model =
+    case model of
+        Failure errorMsg ->
+            div []
+                [ div [] [ text errorMsg ]
+                , text ""
+                , button [ onClick DoIt ] [ text "Try Again!" ]
+                ]
+
+        _ ->
+            text ""
 
 
 
@@ -167,7 +184,7 @@ decodePage =
     map3 Page
         (field "title" string)
         (field "story" (list decodeStory))
-        (field "journal" (list decodeJournal))
+        (field "journal" (list decodeStoryEdit))
 
 
 decodeStory : Decoder Story
@@ -178,10 +195,18 @@ decodeStory =
         (field "text" string)
 
 
-decodeJournal : Decoder Journal
-decodeJournal =
+decodeStoryEdit : Decoder Journal
+decodeStoryEdit =
     map4 Journal
         (field "type" string)
         (field "id" string)
-        (field "item" string)
-        (field "date" string)
+        (field "item" decodeJournalItem)
+        (field "date" int)
+
+
+decodeJournalItem : Decoder Item
+decodeJournalItem =
+    map3 Item
+        (field "type" string)
+        (field "id" string)
+        (field "text" string)
