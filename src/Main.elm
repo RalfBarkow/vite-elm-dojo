@@ -1,112 +1,73 @@
 module Main exposing (main)
 
--- Input a user name and password.
---
--- Read how it works:
---   https://guide.elm-lang.org/architecture/forms.html
---
-
-import Browser
-import Debug
-import Html exposing (Html, button, div, form, input, text)
-import Html.Attributes exposing (placeholder, type_)
-import Html.Events exposing (onClick, onInput)
-import Http
-import Json.Decode as Json
-import Json.Encode as Encode
+import Html exposing (Html)
+import Json.Decode as Decode exposing (Decoder, map2, map3, string)
+import Json.Decode.Pipeline exposing (required)
 
 
-
--- Define the model
-
-
-type alias Model =
-    { username : String
-    , password : String
-    , response : String
+type alias Page =
+    { title : String
+    , story : List Story
+    , journal : List Journal
     }
 
 
-initialModel : Model
-initialModel =
-    { username = ""
-    , password = ""
-    , response = ""
+type alias Story =
+    { storyType : Maybe String
+    , id : Maybe String
+    , text : Maybe String
     }
 
 
-
--- Define the Msg type
-
-
-type Msg
-    = UsernameChanged String
-    | PasswordChanged String
-    | SubmitClicked
-    | RequestCompleted (Result Http.Error String)
+type alias Journal =
+    { journalType : String
+    , item : Maybe Item
+    , date : Int
+    }
 
 
-
--- Define the update function
-
-
-update : Msg -> Model -> Model
-update msg model =
-    case msg of
-        UsernameChanged newUsername ->
-            { model | username = newUsername }
-
-        PasswordChanged newPassword ->
-            { model | password = newPassword }
-
-        SubmitClicked ->
-            let
-                _ =
-                    { body =
-                        Http.jsonBody <|
-                            Encode.object
-                                [ ( "username", Encode.string model.username )
-                                , ( "password", Encode.string model.password )
-                                ]
-                    , expect = Http.expectString RequestCompleted
-                    , url = "https://your-server.com/login" -- Replace with your server URL
-                    }
-            in
-            { model | response = "Sending request..." }
-
-        RequestCompleted result ->
-            case result of
-                Ok response ->
-                    { model | response = "Request completed: " ++ response }
-
-                Err error ->
-                    { model | response = "Request failed: " ++ Debug.toString error }
+type alias Item =
+    { title : String
+    , story : Maybe Story
+    }
 
 
-
--- Define the view function
-
-
-view : Model -> Html Msg
-view model =
-    div []
-        [ form []
-            [ input [ placeholder "Username", type_ "text", onInput UsernameChanged ] []
-            , input [ placeholder "Password", type_ "password", onInput PasswordChanged ] []
-            , button [ onClick SubmitClicked ] [ text "Submit" ]
-            ]
-        , text model.response
-        ]
+decodePage : Decoder Page
+decodePage =
+    Decode.map3 Page
+        (Decode.field "title" Decode.string)
+        (Decode.field "story" (Decode.list decodeStory))
+        (Decode.field "journal" (Decode.list decodeJournal))
 
 
+decodeStory : Decoder Story
+decodeStory =
+    Decode.map3 Story
+        (Decode.maybe (Decode.field "type" Decode.string))
+        (Decode.maybe (Decode.field "id" Decode.string))
+        (Decode.maybe (Decode.field "text" Decode.string))
 
--- Start the Elm application
+
+decodeJournal : Decoder Journal
+decodeJournal =
+    Decode.map3 Journal
+        (Decode.field "type" Decode.string)
+        (Decode.maybe decodeItem)
+        (Decode.field "date" Decode.int)
 
 
-main : Program () Model Msg
+decodeItem : Decoder Item
+decodeItem =
+    Decode.map2 Item
+        (Decode.field "title" Decode.string)
+        (Decode.maybe (Decode.field "story" decodeStory))
+
+
+main : Html msg
 main =
-    Browser.sandbox
-        { init = initialModel
-        , update = update
-        , view = view
-        }
+    """
+{"title":"Create New Page Test","story":[],"journal":[{"type":"create","item":{"title":"Create New Page Test","story":[]},"date":1685640550036}]}
+"""
+        |> Decode.decodeString decodePage
+        |> Debug.toString
+        |> Html.text
