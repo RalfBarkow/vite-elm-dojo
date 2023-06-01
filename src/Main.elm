@@ -27,20 +27,7 @@ type alias Page =
 main : Html msg
 main =
     """
-{
-  "title": "Create New Page Test",
-  "story": [],
-  "journal": [
-    {
-      "journalType": "create",
-      "item": {
-        "title": "Create New Page Test",
-        "story": []
-      },
-      "date": 1685631537021
-    }
-  ]
-}
+{"title":"Create New Page Test","story":[],"journal":[{"type":"create","item":{"title":"Create New Page Test","story":[]},"date":1685633118352}]}
 """
         |> Decode.decodeString decodePage
         |> Debug.toString
@@ -58,7 +45,7 @@ decodePage =
 decodeJournal : Decoder Journal
 decodeJournal =
     map3 Journal
-        (Decode.field "journalType" Decode.string)
+        (Decode.field "type" Decode.string)
         (Decode.field "item" decodeItem)
         (Decode.field "date" Decode.int)
 
