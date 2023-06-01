@@ -200,7 +200,7 @@ decodeStoryEdit =
     map4 Journal
         (field "type" string)
         (field "id" string)
-        (field "item" decodeJournalItem)
+        decodeJournalItem
         (field "date" int)
 
 
