@@ -1,8 +1,7 @@
-module Main exposing (main)
+module Main exposing (..)
 
 import Html exposing (Html)
-import Json.Decode as Decode exposing (Decoder, map2, map3, string)
-import Json.Decode.Pipeline exposing (required)
+import Json.Decode as Decode exposing (Decoder)
 
 
 type alias Page =
@@ -13,15 +12,15 @@ type alias Page =
 
 
 type alias Story =
-    { storyType : Maybe String
-    , id : Maybe String
-    , text : Maybe String
+    { storyType : String
+    , id : String
+    , text : String
     }
 
 
 type alias Journal =
     { journalType : String
-    , item : Maybe Item
+    , item : Item
     , date : Int
     }
 
@@ -43,16 +42,16 @@ decodePage =
 decodeStory : Decoder Story
 decodeStory =
     Decode.map3 Story
-        (Decode.maybe (Decode.field "type" Decode.string))
-        (Decode.maybe (Decode.field "id" Decode.string))
-        (Decode.maybe (Decode.field "text" Decode.string))
+        (Decode.field "type" Decode.string)
+        (Decode.field "id" Decode.string)
+        (Decode.field "text" Decode.string)
 
 
 decodeJournal : Decoder Journal
 decodeJournal =
     Decode.map3 Journal
         (Decode.field "type" Decode.string)
-        (Decode.maybe decodeItem)
+        (Decode.field "item" decodeItem)
         (Decode.field "date" Decode.int)
 
 
@@ -65,14 +64,27 @@ decodeItem =
 
 main : Html msg
 main =
-    testData
+    rawData
         |> Decode.decodeString decodePage
         |> Debug.toString
         |> Html.text
 
 
-testData : String
-testData =
+rawData : String
+rawData =
     """
-{"title":"Create New Page Test","story":[],"journal":[{"type":"create","item":{"title":"Create New Page Test","story":[]},"date":1685640550036}]}
-"""
+{
+  "title": "Create New Page Test",
+  "story": [],
+  "journal": [
+    {
+      "type": "create",
+      "item": {
+        "title": "Create New Page Test",
+        "story": []
+      },
+      "date": 1685640550036
+    }
+  ]
+}
+    """

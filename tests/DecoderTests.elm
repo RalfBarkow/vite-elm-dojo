@@ -1,10 +1,50 @@
 module DecoderTests exposing (suite)
 
+import Expect
+import Json.Decode as Decode exposing (Decoder)
+import Main exposing (..)
 import Test exposing (Test, describe, test)
+
+
+rawData : String
+rawData =
+    """
+    {
+        "journal": [
+            {
+                "journalType": "create",
+                "item": {
+                    "itemId": "item1"
+                },
+                "date": 1685640550036
+            }
+        ],
+        "story": [],
+        "title": "Create New Page Test"
+    }
+    """
+
+
+expected : String
+expected =
+    """Ok { journal = [{ date = 1685640550036, item = { story = Nothing, title = "Create New Page Test" }, journalType = "create" }], story = [], title = "Create New Page Test" }"""
 
 
 suite : Test
 suite =
-    describe "Decoder Tests"
-        [-- Add your test cases here
+    describe "DecoderTests Suite"
+        [ test "Decoding Page"
+            (\_ ->
+                Expect.equal expected (decodeAndDebug rawData)
+            )
         ]
+
+
+decodeAndDebug : String -> String
+decodeAndDebug data =
+    case Decode.decodeString decodePage data of
+        Ok decoded ->
+            Debug.toString decoded
+
+        Err error ->
+            Debug.toString error
