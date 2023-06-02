@@ -73,18 +73,5 @@ main =
 rawData : String
 rawData =
     """
-{
-  "title": "Create New Page Test",
-  "story": [],
-  "journal": [
-    {
-      "type": "create",
-      "item": {
-        "title": "Create New Page Test",
-        "story": []
-      },
-      "date": 1685640550036
-    }
-  ]
-}
+{"title":"Journal, Jun 2023","story":[{"type":"reference","id":"e559b5e3704baabe","site":"wiki.ralfbarkow.ch","slug":"2023-06-01","title":"2023-06-01","text":"⇒ [[Elm and JSON]] ⇒ [[Decoding JSON HTTP Responses]] ⇒ [[Exploratory Parsing]]"}],"journal":[{"type":"create","item":{"title":"Journal, Jun 2023","story":[]},"date":1685687188741},{"item":{"type":"factory","id":"e559b5e3704baabe"},"id":"e559b5e3704baabe","type":"add","date":1685687190665},{"type":"edit","id":"e559b5e3704baabe","item":{"type":"reference","id":"e559b5e3704baabe","site":"wiki.ralfbarkow.ch","slug":"2023-06-01","title":"2023-06-01","text":"⇒ [[Elm and JSON]] ⇒ [[Decoding JSON HTTP Responses]] ⇒ [[Exploratory Parsing]]"},"date":1685687192973}]}
     """

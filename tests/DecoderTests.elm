@@ -1,8 +1,8 @@
 module DecoderTests exposing (suite)
 
 import Expect
-import Json.Decode as Decode exposing (Decoder)
-import Main exposing (..)
+import Json.Decode as Decode
+import Main exposing (decodePage)
 import Test exposing (Test, describe, test)
 
 
@@ -33,7 +33,7 @@ expected =
 suite : Test
 suite =
     describe "DecoderTests Suite"
-        [ test "Decoding Page"
+        [ test "decodePage with decodeAndDebug"
             (\_ ->
                 Expect.equal expected (decodeAndDebug rawData)
             )
