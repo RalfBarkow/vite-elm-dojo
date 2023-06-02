@@ -6,7 +6,7 @@ import Html exposing (..)
 import Html.Attributes exposing (style)
 import Html.Events exposing (..)
 import Http
-import Json.Decode exposing (Decoder, field, int, list, map3, map4, string)
+import Wiki exposing (decodePage)
 
 
 
@@ -29,37 +29,8 @@ main =
 
 type Model
     = Loading
-    | Success Page
+    | Success Wiki.Page
     | Failure String
-
-
-type alias Page =
-    { title : String
-    , story : List Story
-    , journal : List Journal
-    }
-
-
-type alias Story =
-    { typeOfStoryItem : String
-    , id : String
-    , text : String
-    }
-
-
-type alias Journal =
-    { typeOfStoryEdit : String
-    , id : String
-    , item : Item
-    , date : Int
-    }
-
-
-type alias Item =
-    { typeOfJournalItem : String
-    , id : String
-    , text : String
-    }
 
 
 init : () -> ( Model, Cmd Msg )
@@ -73,7 +44,7 @@ init _ =
 
 type Msg
     = DoIt
-    | GotPage (Result Http.Error Page)
+    | GotPage (Result Http.Error Wiki.Page)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -175,38 +146,5 @@ getWikiPageJson : Cmd Msg
 getWikiPageJson =
     Http.get
         { url = "http://wiki.ralfbarkow.ch/elm-and-json.json"
-        , expect = Http.expectJson GotPage decodePage
+        , expect = Http.expectJson GotPage Wiki.decodePage
         }
-
-
-decodePage : Decoder Page
-decodePage =
-    map3 Page
-        (field "title" string)
-        (field "story" (list decodeStory))
-        (field "journal" (list decodeStoryEdit))
-
-
-decodeStory : Decoder Story
-decodeStory =
-    map3 Story
-        (field "type" string)
-        (field "id" string)
-        (field "text" string)
-
-
-decodeStoryEdit : Decoder Journal
-decodeStoryEdit =
-    map4 Journal
-        (field "type" string)
-        (field "id" string)
-        (field "item" decodeJournalItem)
-        (field "date" int)
-
-
-decodeJournalItem : Decoder Item
-decodeJournalItem =
-    map3 Item
-        (field "type" string)
-        (field "id" string)
-        (field "text" string)
