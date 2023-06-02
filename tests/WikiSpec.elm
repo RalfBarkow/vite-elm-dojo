@@ -1,9 +1,9 @@
-module DecoderTests exposing (suite)
+module WikiSpec exposing (suite)
 
 import Expect
 import Json.Decode as Decode
-import Main exposing (decodePage)
 import Test exposing (Test, describe, test)
+import Wiki exposing (decodePage)
 
 
 rawData : String
@@ -32,7 +32,7 @@ expected =
 
 suite : Test
 suite =
-    describe "DecoderTests Suite"
+    describe "DecoderTests"
         [ test "decodePage with decodeAndDebug"
             (\_ ->
                 Expect.equal expected (decodeAndDebug rawData)
