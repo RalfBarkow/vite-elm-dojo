@@ -1,7 +1,9 @@
 module Main exposing (main)
 
 import Browser
-import Html exposing (Html, div, pre, text)
+import Html exposing (Html, div, pre, text, textarea)
+import Html.Attributes exposing (value)
+import Html.Events exposing (onInput)
 import Json.Decode as Json
 
 
@@ -16,7 +18,7 @@ type alias Model =
 
 
 type Msg
-    = NoOp
+    = UpdateJsonText String
 
 
 init : () -> ( Model, Cmd Msg )
@@ -38,15 +40,15 @@ rawData =
     }
   ],
   "journal": []
-}   
+}
     """
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        NoOp ->
-            ( model, Cmd.none )
+        UpdateJsonText newText ->
+            ( { model | jsonText = newText }, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
@@ -66,7 +68,11 @@ view model =
                     "Invalid JSON: " ++ Json.errorToString error
     in
     div []
-        [ pre [] [ text bracketStructure ]
+        [ div []
+            [ text "Enter JSON content:"
+            , div [] [ textarea [ value model.jsonText, onInput UpdateJsonText ] [] ]
+            ]
+        , pre [] [ text bracketStructure ]
         ]
 
 
