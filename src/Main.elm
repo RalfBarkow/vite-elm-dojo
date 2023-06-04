@@ -21,7 +21,25 @@ type Msg
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { jsonText = "Put your slug.json content here" }, Cmd.none )
+    ( { jsonText = rawData }, Cmd.none )
+
+
+rawData : String
+rawData =
+    """
+{
+  "title": "2023-06-02",
+  "story": [
+    {
+      "id": "762b2890c794edc1",
+      "type": "future",
+      "text": "We could not find this page.",
+      "title": "2023-06-02"
+    }
+  ],
+  "journal": []
+}   
+    """
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
