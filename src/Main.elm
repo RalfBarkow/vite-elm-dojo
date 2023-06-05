@@ -45,14 +45,14 @@ init _ =
 
 
 type Msg
-    = UpdateJsonInput String
+    = UpdateInput String
     | ParseJson
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        UpdateJsonInput value ->
+        UpdateInput value ->
             ( { model | input = value }, Cmd.none )
 
         ParseJson ->
@@ -75,7 +75,7 @@ view : Model -> Html Msg
 view model =
     div []
         [ div []
-            [ textarea [ placeholder "Enter JSON here", rows 10, cols 80, onInput UpdateJsonInput ] [ text model.input ]
+            [ textarea [ placeholder "Enter JSON here", rows 10, cols 80, onInput UpdateInput ] [ text model.input ]
             ]
         , div []
             [ button [ onClick ParseJson ] [ text "Parse JSON" ]
