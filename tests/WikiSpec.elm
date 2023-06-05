@@ -1,10 +1,9 @@
 module WikiSpec exposing (suite)
 
-import Expect
-import Json.Decode as Decode
-import Json.Encode as Encode
-import Test exposing (Test, describe, test)
-import Wiki exposing (decodePage, encodePage)
+import Expect exposing (equal)
+import Json.Decode as Decode exposing (decodeString)
+import Test exposing (Test, test)
+import Wiki exposing (StoryEditType(..), extractType)
 
 
 rawData : String
@@ -23,28 +22,23 @@ rawData =
       "date": 1685700575889
     }
   ]
-}    
-    """
+}
+"""
 
 
 suite : Test
 suite =
-    describe "Decoder and Encoder Tests"
-        [ test "Decode and Encode Page"
-            (\() ->
-                let
-                    input : String
-                    input =
-                        -- Provide the input data for decoding
-                        rawData
+    let
+        json =
+            rawData
 
-                    decodedResult =
-                        Decode.decodeString decodePage input
-
-                    encodedResult =
-                        Result.map (Encode.encode 2 << encodePage) decodedResult
-                in
-                encodedResult
-                    |> Expect.equal (Ok input)
-            )
-        ]
+        expectedType =
+            extractType |> Decode.andThen (\_ -> Decode.succeed Create)
+    in
+    test "Decoding journal entry" <|
+        \() ->
+            let
+                decoded =
+                    decodeString (Decode.field "journal" (Decode.list expectedType)) json
+            in
+            equal decoded (Ok [ Create ])

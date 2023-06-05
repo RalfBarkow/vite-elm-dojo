@@ -1,4 +1,4 @@
-module Wiki exposing (Page, decodePage, encodePage)
+module Wiki exposing (Page, StoryEditType(..), decodePage, encodePage, extractType)
 
 import Json.Decode as Decode exposing (Decoder, field, int, list, string)
 import Json.Decode.Pipeline exposing (required)
@@ -70,7 +70,9 @@ type alias Journal =
 
 
 type StoryEditType
-    = Edit
+    = Future
+    | Create
+    | Edit
     | Add
     | Move
 
@@ -97,6 +99,12 @@ encodeJournal journal =
 storyEditTypeToString : StoryEditType -> String
 storyEditTypeToString storyEditType =
     case storyEditType of
+        Future ->
+            "future"
+
+        Create ->
+            "create"
+
         Add ->
             "add"
 
@@ -110,6 +118,12 @@ storyEditTypeToString storyEditType =
 decodeStoryEditType : String -> Decoder StoryEditType
 decodeStoryEditType name =
     case name of
+        "future" ->
+            Decode.succeed Future
+
+        "create" ->
+            Decode.succeed Create
+
         "edit" ->
             Decode.succeed Edit
 
@@ -145,3 +159,17 @@ encodeJournalItem item =
         , ( "id", Encode.string item.id )
         , ( "text", Encode.string item.text )
         ]
+
+
+extractType : Decoder StoryEditType
+extractType =
+    Decode.at [ "type" ] Decode.string
+        |> Decode.andThen
+            (\typeStr ->
+                case typeStr of
+                    "create" ->
+                        Decode.succeed Create
+
+                    _ ->
+                        Decode.fail ("Invalid type: " ++ typeStr)
+            )
