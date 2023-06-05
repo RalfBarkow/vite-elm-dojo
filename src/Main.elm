@@ -11,9 +11,9 @@ import String exposing (trim)
 
 
 type alias Model =
-    { jsonInput : String
+    { input : String
     , parsedJson : ParsedJson
-    , jsonOutput : String
+    , output : String
     }
 
 
@@ -41,7 +41,7 @@ init _ =
             }
             """
     in
-    ( { jsonInput = rawData, parsedJson = NotParsed, jsonOutput = "" }, Cmd.none )
+    ( { input = rawData, parsedJson = NotParsed, output = "" }, Cmd.none )
 
 
 type Msg
@@ -53,20 +53,20 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         UpdateJsonInput value ->
-            ( { model | jsonInput = value }, Cmd.none )
+            ( { model | input = value }, Cmd.none )
 
         ParseJson ->
             let
                 json =
-                    trim model.jsonInput
+                    trim model.input
 
                 result =
                     case Decode.decodeString decodePerson json of
                         Ok value ->
-                            ( { model | parsedJson = Parsed value, jsonOutput = encodePerson value |> Encode.encode 2 }, Cmd.none )
+                            ( { model | parsedJson = Parsed value, output = encodePerson value |> Encode.encode 2 }, Cmd.none )
 
                         Err _ ->
-                            ( { model | parsedJson = NotParsed, jsonOutput = "" }, Cmd.none )
+                            ( { model | parsedJson = NotParsed, output = "" }, Cmd.none )
             in
             result
 
@@ -75,7 +75,7 @@ view : Model -> Html Msg
 view model =
     div []
         [ div []
-            [ textarea [ placeholder "Enter JSON here", rows 10, cols 80, onInput UpdateJsonInput ] [ text model.jsonInput ]
+            [ textarea [ placeholder "Enter JSON here", rows 10, cols 80, onInput UpdateJsonInput ] [ text model.input ]
             ]
         , div []
             [ button [ onClick ParseJson ] [ text "Parse JSON" ]
