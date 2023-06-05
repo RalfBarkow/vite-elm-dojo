@@ -4,7 +4,7 @@ import Debug
 import Expect
 import Json.Decode as Decode
 import Test exposing (Test, test)
-import Wiki exposing (StoryEditType(..), extractType)
+import Wiki exposing (..)
 
 
 rawData : String
@@ -46,7 +46,7 @@ suite =
                     decoded =
                         Decode.decodeString extractType "\"create\""
                 in
-                Expect.equal decoded (Ok Create)
+                Expect.equal decoded (Ok "Create")
         , test "Test extractType with jsonData" <|
             \() ->
                 let
@@ -54,7 +54,10 @@ suite =
                         rawData
 
                     decoded =
-                        Decode.decodeString (Decode.field "type" extractType) jsonData
+                        Decode.decodeString (Decode.field "journal" (Decode.field "type" extractType)) jsonData
+
+                    _ =
+                        Debug.log "Decoded" decoded
                 in
-                Expect.equal decoded (Ok Create)
+                Expect.equal decoded (Ok "Create")
         ]
