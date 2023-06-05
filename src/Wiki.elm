@@ -1,7 +1,7 @@
 module Wiki exposing (Page, decodePage, encodePage)
 
-import Json.Decode as Decode exposing (Decoder, field, int, list, map3, string)
-import Json.Decode.Pipeline exposing (hardcoded, optional, required)
+import Json.Decode as Decode exposing (Decoder, field, int, list, string)
+import Json.Decode.Pipeline exposing (required)
 import Json.Encode as Encode
 
 
