@@ -4,26 +4,13 @@ import Browser
 import Html exposing (Html, div, pre, text, textarea)
 import Html.Attributes exposing (value)
 import Html.Events exposing (onInput)
-import Json.Decode as Json
+import Json.Decode as Decode
+import Json.Encode as Encode
 
 
 main : Program () Model Msg
 main =
     Browser.element { init = init, update = update, view = view, subscriptions = subscriptions }
-
-
-type alias Model =
-    { jsonText : String
-    }
-
-
-type Msg
-    = UpdateJsonText String
-
-
-init : () -> ( Model, Cmd Msg )
-init _ =
-    ( { jsonText = rawData }, Cmd.none )
 
 
 rawData : String
@@ -44,11 +31,40 @@ rawData =
     """
 
 
+type alias Model =
+    { jsonText : String
+    , parsedJson : ParsedJson
+    }
+
+
+type ParsedJson
+    = NotParsed
+    | Parsed Decode.Value
+
+
+type Msg
+    = UpdateJsonText String
+
+
+init : () -> ( Model, Cmd Msg )
+init _ =
+    ( { jsonText = rawData, parsedJson = NotParsed }, Cmd.none )
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         UpdateJsonText newText ->
-            ( { model | jsonText = newText }, Cmd.none )
+            let
+                newParsedJson =
+                    case Decode.decodeString Decode.value newText of
+                        Ok value ->
+                            Parsed value
+
+                        Err _ ->
+                            NotParsed
+            in
+            ( { model | jsonText = newText, parsedJson = newParsedJson }, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
@@ -60,22 +76,17 @@ view : Model -> Html Msg
 view model =
     let
         bracketStructure =
-            case Json.decodeString getBracketStructure model.jsonText of
-                Ok brackets ->
-                    brackets
+            case model.parsedJson of
+                Parsed value ->
+                    pre [] [ text (Encode.encode 0 value) ]
 
-                Err error ->
-                    "Invalid JSON: " ++ Json.errorToString error
+                NotParsed ->
+                    pre [] [ text "Enter JSON content 👆️" ]
     in
     div []
         [ div []
             [ text "Enter JSON content:"
             , div [] [ textarea [ value model.jsonText, onInput UpdateJsonText ] [] ]
             ]
-        , pre [] [ text bracketStructure ]
+        , bracketStructure
         ]
-
-
-getBracketStructure : Json.Decoder String
-getBracketStructure =
-    Json.succeed "Bracket structure placeholder"
