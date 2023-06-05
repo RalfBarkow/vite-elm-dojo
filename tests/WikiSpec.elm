@@ -1,7 +1,8 @@
 module WikiSpec exposing (suite)
 
-import Expect exposing (equal)
-import Json.Decode as Decode exposing (decodeString)
+import Debug
+import Expect
+import Json.Decode as Decode
 import Test exposing (Test, test)
 import Wiki exposing (StoryEditType(..), extractType)
 
@@ -28,17 +29,32 @@ rawData =
 
 suite : Test
 suite =
-    let
-        json =
-            rawData
+    Test.describe "Wiki"
+        [ test "Example test" <|
+            \() ->
+                let
+                    value =
+                        42
 
-        expectedType =
-            extractType |> Decode.andThen (\_ -> Decode.succeed Create)
-    in
-    test "Decoding journal entry" <|
-        \() ->
-            let
-                decoded =
-                    decodeString (Decode.field "journal" (Decode.list expectedType)) json
-            in
-            equal decoded (Ok [ Create ])
+                    _ =
+                        Debug.log "Value" value
+                in
+                Expect.equal value 42
+        , test "Test extractType" <|
+            \() ->
+                let
+                    decoded =
+                        Decode.decodeString extractType "\"create\""
+                in
+                Expect.equal decoded (Ok Create)
+        , test "Test extractType with jsonData" <|
+            \() ->
+                let
+                    jsonData =
+                        rawData
+
+                    decoded =
+                        Decode.decodeString (Decode.field "type" extractType) jsonData
+                in
+                Expect.equal decoded (Ok Create)
+        ]
