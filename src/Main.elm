@@ -1,92 +1,129 @@
 module Main exposing (main)
 
 import Browser
-import Html exposing (Html, div, pre, text, textarea)
-import Html.Attributes exposing (value)
-import Html.Events exposing (onInput)
-import Json.Decode as Decode
-import Json.Encode as Encode
-
-
-main : Program () Model Msg
-main =
-    Browser.element { init = init, update = update, view = view, subscriptions = subscriptions }
-
-
-rawData : String
-rawData =
-    """
-{
-  "title": "2023-06-02",
-  "story": [
-    {
-      "id": "762b2890c794edc1",
-      "type": "future",
-      "text": "We could not find this page.",
-      "title": "2023-06-02"
-    }
-  ],
-  "journal": []
-}
-    """
+import Html exposing (Html, button, div, h3, pre, text, textarea)
+import Html.Attributes exposing (cols, placeholder, rows)
+import Html.Events exposing (onClick, onInput)
+import Json.Decode as Decode exposing (Decoder)
+import Json.Decode.Pipeline exposing (required)
+import Json.Encode as Encode exposing (Value, object)
+import String exposing (trim)
 
 
 type alias Model =
-    { jsonText : String
+    { jsonInput : String
     , parsedJson : ParsedJson
+    , jsonOutput : String
     }
 
 
 type ParsedJson
     = NotParsed
-    | Parsed Decode.Value
+    | Parsed Person
 
 
-type Msg
-    = UpdateJsonText String
+type alias Person =
+    { name : String
+    , age : Int
+    , hobbies : List String
+    }
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { jsonText = rawData, parsedJson = NotParsed }, Cmd.none )
+    let
+        rawData =
+            """
+            {
+                "name": "John Doe",
+                "age": 30,
+                "hobbies": ["reading", "playing guitar"]
+            }
+            """
+    in
+    ( { jsonInput = rawData, parsedJson = NotParsed, jsonOutput = "" }, Cmd.none )
+
+
+type Msg
+    = UpdateJsonInput String
+    | ParseJson
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        UpdateJsonText newText ->
+        UpdateJsonInput value ->
+            ( { model | jsonInput = value }, Cmd.none )
+
+        ParseJson ->
             let
-                newParsedJson =
-                    case Decode.decodeString Decode.value newText of
+                json =
+                    trim model.jsonInput
+
+                result =
+                    case Decode.decodeString decodePerson json of
                         Ok value ->
-                            Parsed value
+                            ( { model | parsedJson = Parsed value, jsonOutput = encodePerson value |> Encode.encode 2 }, Cmd.none )
 
                         Err _ ->
-                            NotParsed
+                            ( { model | parsedJson = NotParsed, jsonOutput = "" }, Cmd.none )
             in
-            ( { model | jsonText = newText, parsedJson = newParsedJson }, Cmd.none )
-
-
-subscriptions : Model -> Sub Msg
-subscriptions _ =
-    Sub.none
+            result
 
 
 view : Model -> Html Msg
 view model =
-    let
-        bracketStructure =
-            case model.parsedJson of
-                Parsed value ->
-                    pre [] [ text (Encode.encode 0 value) ]
-
-                NotParsed ->
-                    pre [] [ text "Enter JSON content 👆️" ]
-    in
     div []
         [ div []
-            [ text "Enter JSON content:"
-            , div [] [ textarea [ value model.jsonText, onInput UpdateJsonText ] [] ]
+            [ textarea [ placeholder "Enter JSON here", rows 10, cols 80, onInput UpdateJsonInput ] [ text model.jsonInput ]
             ]
-        , bracketStructure
+        , div []
+            [ button [ onClick ParseJson ] [ text "Parse JSON" ]
+            ]
+        , div []
+            [ case model.parsedJson of
+                NotParsed ->
+                    text "JSON not parsed. Please enter your data and click 'Parse JSON'."
+
+                Parsed person ->
+                    div []
+                        [ h3 [] [ text "Parsed JSON" ]
+                        , pre [] [ text (Debug.toString person) ]
+                        ]
+            ]
+        ]
+
+
+main : Program () Model Msg
+main =
+    Browser.element
+        { init = init
+        , view = view
+        , update = update
+        , subscriptions = \_ -> Sub.none
+        }
+
+
+
+-- JSON Decoding
+
+
+decodePerson : Decoder Person
+decodePerson =
+    Decode.succeed Person
+        |> required "name" Decode.string
+        |> required "age" Decode.int
+        |> required "hobbies" (Decode.list Decode.string)
+
+
+
+-- Elm Encoding
+
+
+encodePerson : Person -> Value
+encodePerson person =
+    object
+        [ ( "name", Encode.string person.name )
+        , ( "age", Encode.int person.age )
+        , ( "hobbies", Encode.list Encode.string person.hobbies )
         ]
