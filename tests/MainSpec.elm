@@ -3,7 +3,7 @@ module MainSpec exposing (suite)
 import Expect
 import Json.Decode as Decode
 import Json.Encode as Encode
-import Main exposing (..)
+import Main exposing (Person, decodePerson, encodePerson)
 import Test exposing (Test, test)
 
 
