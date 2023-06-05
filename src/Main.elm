@@ -63,7 +63,7 @@ update msg model =
                 result =
                     case Decode.decodeString decodePerson json of
                         Ok value ->
-                            ( { model | parsedJson = Parsed value, output = encodePerson value |> Encode.encode 2 }, Cmd.none )
+                            ( { model | parsedJson = Parsed value, output = encodePerson value |> Encode.encode 0 }, Cmd.none )
 
                         Err _ ->
                             ( { model | parsedJson = NotParsed, output = "" }, Cmd.none )
