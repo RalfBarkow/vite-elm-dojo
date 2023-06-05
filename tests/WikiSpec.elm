@@ -30,24 +30,7 @@ rawData =
 suite : Test
 suite =
     Test.describe "Wiki"
-        [ test "Example test" <|
-            \() ->
-                let
-                    value =
-                        42
-
-                    _ =
-                        Debug.log "Value" value
-                in
-                Expect.equal value 42
-        , test "Test extractType" <|
-            \() ->
-                let
-                    decoded =
-                        Decode.decodeString extractType "\"create\""
-                in
-                Expect.equal decoded (Ok "Create")
-        , test "Test extractType with jsonData" <|
+        [ test "extractType" <|
             \() ->
                 let
                     jsonData =
@@ -59,5 +42,18 @@ suite =
                     _ =
                         Debug.log "Decoded" decoded
                 in
-                Expect.equal decoded (Ok "Create")
+                Expect.equal decoded (Ok "create")
+        , test "Check for type 'create'" <|
+            \() ->
+                let
+                    jsonData =
+                        rawData
+
+                    expectedType =
+                        "create"
+
+                    decoded =
+                        Decode.decodeString (Decode.field "journal" (Decode.field "type" Decode.string)) jsonData
+                in
+                Expect.equal decoded (Ok expectedType)
         ]
