@@ -42,7 +42,7 @@ suite =
                                 "We could not find this page."
                                 "Create New Page Test"
                             ]
-                            [ Journal [] ]
+                            [ Journal ]
                 in
                 Expect.equal (Decode.decodeString pageDecoder jsonString) (Ok expectedPage)
         ]

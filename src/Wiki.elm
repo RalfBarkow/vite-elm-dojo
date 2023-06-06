@@ -27,7 +27,7 @@ type alias Story =
 
 
 type alias Journal =
-    { storyEdits : List StoryEdit }
+    {}
 
 
 type StoryEdit
@@ -36,6 +36,18 @@ type StoryEdit
     | Edit EditEntry
     | Move MoveEntry
     | Unknown Decode.Value
+
+
+
+-- fields specific to the future entry
+
+
+type alias FutureEntry =
+    { id : String
+    , type_ : String
+    , text : String
+    , title : String
+    }
 
 
 
@@ -59,14 +71,6 @@ type alias EditEntry =
 
 
 type alias MoveEntry =
-    {}
-
-
-
--- fields specific to the future entry
-
-
-type alias FutureEntry =
     {}
 
 
