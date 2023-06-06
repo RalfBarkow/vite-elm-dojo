@@ -1,9 +1,9 @@
 module WikiSpec exposing (suite)
 
-import Expect exposing (equal)
+import Expect
 import Json.Decode as Decode
 import Test exposing (..)
-import Wiki exposing (Page, Story, pageDecoder)
+import Wiki exposing (Journal, Page, Story, pageDecoder)
 
 
 rawData : String
@@ -42,7 +42,7 @@ suite =
                                 "We could not find this page."
                                 "Create New Page Test"
                             ]
-                            []
+                            [ Journal [] ]
                 in
                 Expect.equal (Decode.decodeString pageDecoder jsonString) (Ok expectedPage)
         ]

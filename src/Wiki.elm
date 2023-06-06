@@ -1,4 +1,4 @@
-module Wiki exposing (Page, Story, pageDecoder)
+module Wiki exposing (Journal, Page, Story, pageDecoder)
 
 import Json.Decode as Decode
 
@@ -10,6 +10,10 @@ type alias Page =
     }
 
 
+
+-- The "story" is a collection of paragraphs and paragraph like items.
+
+
 type alias Story =
     { id : String
     , type_ : String
@@ -18,11 +22,19 @@ type alias Story =
     }
 
 
-type Journal
-    = Create CreateEntry
+
+-- The "journal" collects story edits.
+
+
+type alias Journal =
+    { storyEdits : List StoryEdit }
+
+
+type StoryEdit
+    = Future FutureEntry
+    | Create CreateEntry
     | Edit EditEntry
     | Move MoveEntry
-    | Future FutureEntry
     | Unknown Decode.Value
 
 
