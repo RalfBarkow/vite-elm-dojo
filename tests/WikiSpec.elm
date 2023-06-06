@@ -3,7 +3,7 @@ module WikiSpec exposing (suite)
 import Expect exposing (equal)
 import Json.Decode as Decode
 import Test exposing (..)
-import Wiki exposing (Page, pageDecoder)
+import Wiki exposing (Page, Story, pageDecoder)
 
 
 rawData : String
