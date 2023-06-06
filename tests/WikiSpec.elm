@@ -11,17 +11,15 @@ rawData =
     """
 {
   "title": "Create New Page Test",
-  "story": [],
-  "journal": [
+  "story": [
     {
-      "type": "create",
-      "item": {
-        "title": "Create New Page Test",
-        "story": []
-      },
-      "date": 1685700575889
+      "id": "b8a8a898990b9b70",
+      "type": "future",
+      "text": "We could not find this page.",
+      "title": "Create New Page Test"
     }
-  ]
+  ],
+  "journal": []
 }
     """
 
@@ -36,10 +34,15 @@ suite =
                         rawData
 
                     expectedPage =
-                        Page "Create New Page Test" [] []
-
-                    decoded =
-                        Decode.decodeString pageDecoder jsonString
+                        Page
+                            "Create New Page Test"
+                            [ Story
+                                "b8a8a898990b9b70"
+                                "future"
+                                "We could not find this page."
+                                "Create New Page Test"
+                            ]
+                            []
                 in
-                Expect.equal decoded (Ok expectedPage)
+                Expect.equal (Decode.decodeString pageDecoder jsonString) (Ok expectedPage)
         ]
