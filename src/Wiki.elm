@@ -36,12 +36,12 @@ type Journal
     | UnknownJournal Decode.Value
 
 
-type alias CreateEvent =
-    { type_ : String, item : { title : String, story : Story }, date : Int }
-
-
 type alias AddEvent =
     { id : String, title : String }
+
+
+type alias CreateEvent =
+    { type_ : String, item : { title : String, story : Story }, date : Int }
 
 
 type alias EditEvent =
@@ -63,10 +63,28 @@ pageDecoder =
 storyDecoder : Decode.Decoder Story
 storyDecoder =
     Decode.oneOf
-        [ Decode.map UnknownStory Decode.value ]
+        [ Decode.succeed EmptyStory
+        , Decode.succeed NonEmptyStory
+        ]
 
 
 journalDecoder : Decode.Decoder Journal
 journalDecoder =
     Decode.oneOf
-        [ Decode.map UnknownJournal Decode.value ]
+        [ Decode.succeed EmptyJournal
+        , Decode.succeed NonEmptyJournal
+        , Decode.map Create createEventDecoder
+        , Decode.map UnknownJournal Decode.value
+        ]
+
+
+createEventDecoder : Decode.Decoder CreateEvent
+createEventDecoder =
+    Decode.map3 CreateEvent
+        (Decode.field "type" Decode.string)
+        (Decode.field "item" (Decode.map2 ItemDecoder (Decode.field "title" Decode.string) storyDecoder))
+        (Decode.field "date" Decode.int)
+
+
+type alias ItemDecoder =
+    { title : String, story : Story }
