@@ -1,4 +1,4 @@
-module Wiki exposing (Journal(..), Page, Story, pageDecoder)
+module Wiki exposing (Journal(..), Page, Story(..), pageDecoder)
 
 import Json.Decode as Decode
 
@@ -14,12 +14,12 @@ type alias Page =
 -- The "story" is a collection of paragraphs and paragraph like items.
 
 
-type alias Story =
-    { id : String
-    , type_ : String
-    , text : String
-    , title : String
-    }
+type Story
+    = EmptyStory
+    | NonEmptyStory
+    | Future { id : String, type_ : String, text : String, title : String }
+    | Paragraph { type_ : String, id : String, text : String }
+    | UnknownStory Decode.Value
 
 
 
@@ -28,32 +28,45 @@ type alias Story =
 
 type Journal
     = EmptyJournal
-    | NonEmptyJournal String
+    | NonEmptyJournal
+    | Create CreateEvent
+    | Add AddEvent
+    | Edit EditEvent
+    | Move MoveEvent
+    | UnknownJournal Decode.Value
 
 
-type Event
-    = Future
-        { id : String
-        , type_ : String
-        , text : String
-        , title : String
-        }
-    | Create { item : String, date : Int }
-    | Add { id : String, title : String }
-    | Edit { id : String, text : String }
-    | Move { id : String, destination : String }
+type alias CreateEvent =
+    { type_ : String, item : { title : String, story : Story }, date : Int }
+
+
+type alias AddEvent =
+    { id : String, title : String }
+
+
+type alias EditEvent =
+    { id : String, text : String }
+
+
+type alias MoveEvent =
+    { id : String, destination : String }
 
 
 pageDecoder : Decode.Decoder Page
 pageDecoder =
-    Decode.fail "Not implemented"
-
-
-journalDecoder : Decode.Decoder Journal
-journalDecoder =
-    Decode.fail "Not implemented"
+    Decode.map3 Page
+        (Decode.field "title" Decode.string)
+        (Decode.field "story" (Decode.list storyDecoder))
+        (Decode.field "journal" (Decode.list journalDecoder))
 
 
 storyDecoder : Decode.Decoder Story
 storyDecoder =
-    Decode.fail "Not implemented"
+    Decode.oneOf
+        [ Decode.map UnknownStory Decode.value ]
+
+
+journalDecoder : Decode.Decoder Journal
+journalDecoder =
+    Decode.oneOf
+        [ Decode.map UnknownJournal Decode.value ]

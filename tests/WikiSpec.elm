@@ -3,7 +3,7 @@ module WikiSpec exposing (suite)
 import Expect
 import Json.Decode as Decode
 import Test exposing (..)
-import Wiki exposing (Journal(..), Page, Story, pageDecoder)
+import Wiki exposing (Journal(..), Page, Story(..), pageDecoder)
 
 
 rawData : String
@@ -27,7 +27,7 @@ rawData =
 suite : Test
 suite =
     describe "Page Decoder"
-        [ test "Decode JSON into Page - Empty Journal" <|
+        [ test "Empty Journal" <|
             \() ->
                 let
                     jsonString =
@@ -36,16 +36,11 @@ suite =
                     expectedPage =
                         Page
                             "Create New Page Test"
-                            [ Story
-                                "b8a8a898990b9b70"
-                                "future"
-                                "We could not find this page."
-                                "Create New Page Test"
-                            ]
+                            [ NonEmptyStory ]
                             []
                 in
                 Expect.equal (Decode.decodeString pageDecoder jsonString) (Ok expectedPage)
-        , test "Decode JSON into Page - Non-empty Journal" <|
+        , test "Non-empty Journal" <|
             \() ->
                 let
                     jsonString =
@@ -69,13 +64,13 @@ suite =
                     expectedPage =
                         Page
                             "Create New Page Test"
-                            [ Story
-                                "b8a8a898990b9b70"
-                                "future"
-                                "We could not find this page."
-                                "Create New Page Test"
+                            []
+                            [ Create
+                                { type_ = "create"
+                                , item = { title = "Create New Page Test", story = EmptyStory }
+                                , date = 1685700575889
+                                }
                             ]
-                            [ NonEmptyJournal "create" ]
                 in
                 Expect.equal (Decode.decodeString pageDecoder jsonString) (Ok expectedPage)
         ]
