@@ -15,11 +15,15 @@ type alias Page =
 
 
 type Story
-    = EmptyStory
-    | NonEmptyStory
+    = NonEmptyStory (List Item)
+    | EmptyStory {}
     | Future { id : String, type_ : String, text : String, title : String }
     | Paragraph { type_ : String, id : String, text : String }
     | UnknownStory Decode.Value
+
+
+type alias Item =
+    { type_ : String, id : String, text : String }
 
 
 
@@ -41,7 +45,7 @@ type alias AddEvent =
 
 
 type alias CreateEvent =
-    { type_ : String, item : { title : String, story : Story }, date : Int }
+    { type_ : String, item : { title : String, story : List Item }, date : Int }
 
 
 type alias EditEvent =
@@ -63,8 +67,8 @@ pageDecoder =
 storyDecoder : Decode.Decoder Story
 storyDecoder =
     Decode.oneOf
-        [ Decode.succeed EmptyStory
-        , Decode.succeed NonEmptyStory
+        [ Decode.map NonEmptyStory nonEmptyStoryDecoder
+        , Decode.map EmptyStory {} -- Decoder for EmptyStory
         ]
 
 
@@ -87,4 +91,4 @@ createEventDecoder =
 
 
 type alias ItemDecoder =
-    { title : String, story : Story }
+    { title : String, story : {} }
