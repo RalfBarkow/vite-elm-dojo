@@ -12,8 +12,7 @@ import Wiki exposing (Journal(..), Page, Story(..), pageDecoder, pageEncoder)
 
 rawData : String
 rawData =
-    """
-{
+    """{
   "title": "Create New Page Test",
   "story": [
     {
@@ -24,8 +23,7 @@ rawData =
     }
   ],
   "journal": []
-}
-    """
+}"""
 
 
 decoder : Test
