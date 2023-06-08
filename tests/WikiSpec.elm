@@ -27,7 +27,7 @@ rawData =
 suite : Test
 suite =
     describe "Page Decoder"
-        [ test "Empty Journal" <|
+        [ test "Future" <|
             \() ->
                 let
                     jsonString =
@@ -36,11 +36,17 @@ suite =
                     expectedPage =
                         Page
                             "Create New Page Test"
-                            [ NonEmptyStory ]
+                            [ Future
+                                { id = "b8a8a898990b9b70"
+                                , type_ = "future"
+                                , text = "We could not find this page."
+                                , title = "Create New Page Test"
+                                }
+                            ]
                             []
                 in
                 Expect.equal (Decode.decodeString pageDecoder jsonString) (Ok expectedPage)
-        , test "Non-empty Journal" <|
+        , test "Create" <|
             \() ->
                 let
                     jsonString =
