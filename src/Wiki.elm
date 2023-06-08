@@ -22,7 +22,7 @@ type alias Item =
 
 type Story
     = NonEmptyStory NonEmptyStoryAlias
-    | EmptyStory {}
+    | EmptyStory
     | Future { id : String, type_ : String, text : String, title : String }
     | Paragraph { type_ : String, id : String, text : String }
     | UnknownStory Decode.Value
@@ -62,7 +62,7 @@ storyDecoder : Decode.Decoder Story
 storyDecoder =
     Decode.oneOf
         [ Decode.map NonEmptyStory nonEmptyStoryDecoder
-        , Decode.succeed EmptyStory
+        , Decode.map (\_ -> EmptyStory) (Decode.succeed EmptyStory)
         ]
 
 
