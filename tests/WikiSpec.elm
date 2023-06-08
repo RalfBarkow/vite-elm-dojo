@@ -155,4 +155,83 @@ encoder =
                         Encode.encode 2 (pageEncoder page)
                 in
                 Expect.equal encoded expectedJson
+        , test "Add Factory and Paragraph" <|
+            \() ->
+                let
+                    page =
+                        Page
+                            -- TITLE
+                            "Create New Page Test"
+                            -- STORY
+                            [ Paragraph
+                                { type_ = "paragraph"
+                                , id = "e3b2618b301412c5"
+                                , text = "add some text in paragraph"
+                                }
+                            ]
+                            -- JOURNAL
+                            [ Create
+                                { type_ = "create"
+                                , item = { title = "Create New Page Test", story = EmptyStory }
+                                , date = 1686247427400
+                                }
+                            , Add
+                                { item = { type_ = "factory", id = "e3b2618b301412c5" }
+                                , id = "e3b2618b301412c5"
+                                , type_ = "add"
+                                , date = 1686263213861
+                                }
+                            , Edit
+                                { type_ = "edit"
+                                , id = "e3b2618b301412c5"
+                                , item = { type_ = "paragraph", id = "e3b2618b301412c5", text = "add some text in paragraph" }
+                                , date = 1686263217611
+                                }
+                            ]
+
+                    expectedJson =
+                        """{
+  "title": "Create New Page Test",
+  "story": [
+    {
+      "type": "paragraph",
+      "id": "e3b2618b301412c5",
+      "text": "add some text in paragraph"
+    }
+  ],
+  "journal": [
+    {
+      "type": "create",
+      "item": {
+        "title": "Create New Page Test",
+        "story": []
+      },
+      "date": 1686247427400
+    },
+    {
+      "item": {
+        "type": "factory",
+        "id": "e3b2618b301412c5"
+      },
+      "id": "e3b2618b301412c5",
+      "type": "add",
+      "date": 1686263213861
+    },
+    {
+      "type": "edit",
+      "id": "e3b2618b301412c5",
+      "item": {
+        "type": "paragraph",
+        "id": "e3b2618b301412c5",
+        "text": "add some text in paragraph"
+      },
+      "date": 1686263217611
+    }
+  ]
+}"""
+
+                    encoded =
+                        Encode.encode 2 (pageEncoder page)
+                in
+                Expect.equal encoded expectedJson
         ]
