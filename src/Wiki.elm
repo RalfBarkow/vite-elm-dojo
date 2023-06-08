@@ -93,7 +93,6 @@ storyEncoder story =
                 ]
 
         Future alias ->
-            --     { id : String, type_ : String, text : String, title : String }
             Encode.object
                 [ ( "id", Encode.string alias.id )
                 , ( "type", Encode.string alias.type_ )
