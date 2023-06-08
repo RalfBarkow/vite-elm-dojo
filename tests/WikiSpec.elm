@@ -118,4 +118,41 @@ encoder =
                         Encode.encode 2 (pageEncoder page)
                 in
                 Expect.equal encoded expectedJson
+        , test "Create" <|
+            \() ->
+                let
+                    page =
+                        Page
+                            -- TITLE
+                            "Create New Page Test"
+                            -- STORY
+                            []
+                            -- JOURNAL
+                            [ Create
+                                { type_ = "create"
+                                , item = { title = "Create New Page Test", story = EmptyStory }
+                                , date = 1686247427400
+                                }
+                            ]
+
+                    expectedJson =
+                        """{
+  "title": "Create New Page Test",
+  "story": [],
+  "journal": [
+    {
+      "type": "create",
+      "item": {
+        "title": "Create New Page Test",
+        "story": []
+      },
+      "date": 1686247427400
+    }
+  ]
+}"""
+
+                    encoded =
+                        Encode.encode 2 (pageEncoder page)
+                in
+                Expect.equal encoded expectedJson
         ]

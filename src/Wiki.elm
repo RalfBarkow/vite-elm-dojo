@@ -100,6 +100,9 @@ storyEncoder story =
                 , ( "title", Encode.string alias.title )
                 ]
 
+        EmptyStory ->
+            Encode.list identity []
+
         -- Add encoders for other story variants as needed
         _ ->
             Encode.null
@@ -126,6 +129,14 @@ journalEncoder journal =
         -- Add encoders for other journal variants as needed
         _ ->
             Encode.null
+
+
+createEventDecoder : Decode.Decoder CreateEvent
+createEventDecoder =
+    Decode.map3 CreateEvent
+        (Decode.field "type" Decode.string)
+        (Decode.field "item" itemDecoder)
+        (Decode.field "date" Decode.int)
 
 
 futureEventDecoder : Decode.Decoder FutureAlias
@@ -159,11 +170,3 @@ itemEncoder item =
         [ ( "title", Encode.string item.title )
         , ( "story", storyEncoder item.story )
         ]
-
-
-createEventDecoder : Decode.Decoder CreateEvent
-createEventDecoder =
-    Decode.map3 CreateEvent
-        (Decode.field "type" Decode.string)
-        (Decode.field "item" itemDecoder)
-        (Decode.field "date" Decode.int)
