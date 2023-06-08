@@ -10,20 +10,29 @@ type alias Page =
     }
 
 
+type alias Item =
+    { title : String
+    , story : Story
+    }
+
+
 
 -- The "story" is a collection of paragraphs and paragraph like items.
 
 
 type Story
-    = NonEmptyStory (List Item)
+    = NonEmptyStory NonEmptyStoryAlias
     | EmptyStory {}
     | Future { id : String, type_ : String, text : String, title : String }
     | Paragraph { type_ : String, id : String, text : String }
     | UnknownStory Decode.Value
 
 
-type alias Item =
-    { type_ : String, id : String, text : String }
+type alias NonEmptyStoryAlias =
+    { type_ : String
+    , id : String
+    , text : String
+    }
 
 
 
@@ -34,26 +43,11 @@ type Journal
     = EmptyJournal
     | NonEmptyJournal
     | Create CreateEvent
-    | Add AddEvent
-    | Edit EditEvent
-    | Move MoveEvent
     | UnknownJournal Decode.Value
-
-
-type alias AddEvent =
-    { id : String, title : String }
 
 
 type alias CreateEvent =
     { type_ : String, item : { title : String, story : List Item }, date : Int }
-
-
-type alias EditEvent =
-    { id : String, text : String }
-
-
-type alias MoveEvent =
-    { id : String, destination : String }
 
 
 pageDecoder : Decode.Decoder Page
@@ -68,7 +62,7 @@ storyDecoder : Decode.Decoder Story
 storyDecoder =
     Decode.oneOf
         [ Decode.map NonEmptyStory nonEmptyStoryDecoder
-        , Decode.map EmptyStory {} -- Decoder for EmptyStory
+        , Decode.succeed EmptyStory
         ]
 
 
@@ -86,9 +80,28 @@ createEventDecoder : Decode.Decoder CreateEvent
 createEventDecoder =
     Decode.map3 CreateEvent
         (Decode.field "type" Decode.string)
-        (Decode.field "item" (Decode.map2 ItemDecoder (Decode.field "title" Decode.string) storyDecoder))
+        -- journal type create item decoder
+        (Decode.field "item" createEventJournalTypeItemDecoder)
         (Decode.field "date" Decode.int)
 
 
-type alias ItemDecoder =
-    { title : String, story : {} }
+createEventJournalTypeItemDecoder : Decode.Decoder { title : String, story : List Item }
+createEventJournalTypeItemDecoder =
+    Decode.map2 (\title _ -> { title = title, story = [] })
+        (Decode.field "title" Decode.string)
+        (Decode.field "story" (Decode.list itemDecoder))
+
+
+itemDecoder : Decode.Decoder Item
+itemDecoder =
+    Decode.map2 Item
+        (Decode.field "title" Decode.string)
+        storyDecoder
+
+
+nonEmptyStoryDecoder : Decode.Decoder NonEmptyStoryAlias
+nonEmptyStoryDecoder =
+    Decode.map3 NonEmptyStoryAlias
+        (Decode.field "type" Decode.string)
+        (Decode.field "id" Decode.string)
+        (Decode.field "text" Decode.string)
