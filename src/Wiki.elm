@@ -1,6 +1,7 @@
-module Wiki exposing (Journal(..), Page, Story(..), pageDecoder)
+module Wiki exposing (Journal(..), Page, Story(..), pageDecoder, pageEncoder)
 
 import Json.Decode as Decode
+import Json.Encode as Encode
 
 
 type alias Page =
@@ -63,6 +64,15 @@ pageDecoder =
         (Decode.field "journal" (Decode.list journalDecoder))
 
 
+pageEncoder : Page -> Encode.Value
+pageEncoder page =
+    Encode.object
+        [ ( "title", Encode.string page.title )
+        , ( "story", Encode.list storyEncoder page.story )
+        , ( "journal", Encode.list journalEncoder page.journal )
+        ]
+
+
 storyDecoder : Decode.Decoder Story
 storyDecoder =
     Decode.oneOf
@@ -72,12 +82,42 @@ storyDecoder =
         ]
 
 
+storyEncoder : Story -> Encode.Value
+storyEncoder story =
+    case story of
+        NonEmptyStory alias ->
+            Encode.object
+                [ ( "type", Encode.string alias.type_ )
+                , ( "id", Encode.string alias.id )
+                , ( "text", Encode.string alias.text )
+                ]
+
+        -- Add encoders for other story variants as needed
+        _ ->
+            Encode.null
+
+
 journalDecoder : Decode.Decoder Journal
 journalDecoder =
     Decode.oneOf
         [ Decode.map Create createEventDecoder
         , Decode.map UnknownJournal Decode.value
         ]
+
+
+journalEncoder : Journal -> Encode.Value
+journalEncoder journal =
+    case journal of
+        Create event ->
+            Encode.object
+                [ ( "type", Encode.string "create" )
+                , ( "item", itemEncoder event.item )
+                , ( "date", Encode.int event.date )
+                ]
+
+        -- Add encoders for other journal variants as needed
+        _ ->
+            Encode.null
 
 
 futureEventDecoder : Decode.Decoder FutureAlias
@@ -103,6 +143,14 @@ itemDecoder =
     Decode.map2 Item
         (Decode.field "title" Decode.string)
         (Decode.field "story" storyDecoder)
+
+
+itemEncoder : Item -> Encode.Value
+itemEncoder item =
+    Encode.object
+        [ ( "title", Encode.string item.title )
+        , ( "story", storyEncoder item.story )
+        ]
 
 
 createEventDecoder : Decode.Decoder CreateEvent
