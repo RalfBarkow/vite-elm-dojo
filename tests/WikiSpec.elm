@@ -1,5 +1,7 @@
 module WikiSpec exposing (suite)
 
+-- https://wiki.ralfbarkow.ch/view/wikispec_rev203
+
 import Expect
 import Json.Decode as Decode
 import Test exposing (..)
