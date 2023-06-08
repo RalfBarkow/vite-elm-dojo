@@ -35,7 +35,9 @@ suite =
 
                     expectedPage =
                         Page
+                            -- TITLE
                             "Create New Page Test"
+                            -- STORY
                             [ Future
                                 { id = "b8a8a898990b9b70"
                                 , type_ = "future"
@@ -43,6 +45,7 @@ suite =
                                 , title = "Create New Page Test"
                                 }
                             ]
+                            -- JOURNAL
                             []
                 in
                 Expect.equal (Decode.decodeString pageDecoder jsonString) (Ok expectedPage)
@@ -69,8 +72,11 @@ suite =
 
                     expectedPage =
                         Page
+                            -- TITLE
                             "Create New Page Test"
+                            -- STORY
                             []
+                            -- JOURNAL
                             [ Create
                                 { type_ = "create"
                                 , item = { title = "Create New Page Test", story = EmptyStory }
