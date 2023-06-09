@@ -11,14 +11,45 @@ type alias Page =
     }
 
 
-type alias Item =
+pageDecoder : Decode.Decoder Page
+pageDecoder =
+    Decode.map3 Page
+        (Decode.field "title" Decode.string)
+        (Decode.field "story" (Decode.list storyDecoder))
+        (Decode.field "journal" (Decode.list journalDecoder))
+
+
+pageEncoder : Page -> Encode.Value
+pageEncoder page =
+    Encode.object
+        [ ( "title", Encode.string page.title )
+        , ( "story", Encode.list storyEncoder page.story )
+        , ( "journal", Encode.list journalEncoder page.journal )
+        ]
+
+
+
+-- The "story" is a collection of paragraphs and paragraph-like items.
+
+
+type Item
+    = StoryItem StoryItemAlias
+    | ParagraphItem ParagraphItemAlias
+    | FactoryItem FactoryItemAlias
+
+
+type alias StoryItemAlias =
     { title : String
     , story : Story
     }
 
 
+type alias ParagraphItemAlias =
+    { type_ : String, id : String, text : String }
 
--- The "story" is a collection of paragraphs and paragraph-like items.
+
+type alias FactoryItemAlias =
+    { type_ : String, id : String }
 
 
 type Story
@@ -38,39 +69,6 @@ type alias NonEmptyStoryAlias =
     , id : String
     , text : String
     }
-
-
-
--- The "journal" collects story edits.
-
-
-type Journal
-    = EmptyJournal
-    | NonEmptyJournal
-    | Create CreateEvent
-    | UnknownJournal Decode.Value
-
-
-type alias CreateEvent =
-    --"type": "create"
-    { type_ : String, item : Item, date : Int }
-
-
-pageDecoder : Decode.Decoder Page
-pageDecoder =
-    Decode.map3 Page
-        (Decode.field "title" Decode.string)
-        (Decode.field "story" (Decode.list storyDecoder))
-        (Decode.field "journal" (Decode.list journalDecoder))
-
-
-pageEncoder : Page -> Encode.Value
-pageEncoder page =
-    Encode.object
-        [ ( "title", Encode.string page.title )
-        , ( "story", Encode.list storyEncoder page.story )
-        , ( "journal", Encode.list journalEncoder page.journal )
-        ]
 
 
 storyDecoder : Decode.Decoder Story
@@ -108,6 +106,64 @@ storyEncoder story =
             Encode.null
 
 
+storyItemDecoder : Decode.Decoder StoryItemAlias
+storyItemDecoder =
+    Decode.map2 StoryItemAlias
+        (Decode.field "title" Decode.string)
+        (Decode.field "story" storyDecoder)
+
+
+storyItemEncoder : StoryItemAlias -> Encode.Value
+storyItemEncoder item =
+    Encode.object
+        [ ( "title", Encode.string item.title )
+        , ( "story", storyEncoder item.story )
+        ]
+
+
+
+-- The "journal" collects story edits.
+
+
+type Journal
+    = EmptyJournal
+    | NonEmptyJournal
+    | Create CreateEvent
+    | Add AddEvent
+    | Edit EditEvent
+    | UnknownJournal Decode.Value
+
+
+type alias CreateEvent =
+    --"type": "create"
+    { type_ : String, item : StoryItemAlias, date : Int }
+
+
+type alias AddEvent =
+    { item : FactoryItemAlias, id : String, type_ : String, date : Int }
+
+
+factoryItemDecoder : Decode.Decoder FactoryItemAlias
+factoryItemDecoder =
+    -- { type_ : String, id : String }
+    Decode.map2 FactoryItemAlias
+        (Decode.field "type_" Decode.string)
+        (Decode.field "id" Decode.string)
+
+
+factoryItemEncoder : FactoryItemAlias -> Encode.Value
+factoryItemEncoder item =
+    -- "type": "factory"
+    Encode.object
+        [ ( "type", Encode.string "factory" )
+        , ( "id", Encode.string item.id )
+        ]
+
+
+type alias EditEvent =
+    { type_ : String, id : String, item : ParagraphItemAlias, date : Int }
+
+
 journalDecoder : Decode.Decoder Journal
 journalDecoder =
     Decode.oneOf
@@ -122,7 +178,24 @@ journalEncoder journal =
         Create event ->
             Encode.object
                 [ ( "type", Encode.string "create" )
-                , ( "item", itemEncoder event.item )
+                , ( "item", storyItemEncoder event.item )
+                , ( "date", Encode.int event.date )
+                ]
+
+        Add event ->
+            --  { item = Item, id = String, type_ = String, date = Int }
+            Encode.object
+                [ ( "item", factoryItemEncoder event.item )
+                , ( "id", Encode.string event.id )
+                , ( "type_", Encode.string "add" )
+                , ( "date", Encode.int event.date )
+                ]
+
+        Edit event ->
+            Encode.object
+                [ ( "type_", Encode.string "edit" )
+                , ( "id", Encode.string event.id )
+                , ( "item", editItemEncoder event.item )
                 , ( "date", Encode.int event.date )
                 ]
 
@@ -135,7 +208,7 @@ createEventDecoder : Decode.Decoder CreateEvent
 createEventDecoder =
     Decode.map3 CreateEvent
         (Decode.field "type" Decode.string)
-        (Decode.field "item" itemDecoder)
+        (Decode.field "item" storyItemDecoder)
         (Decode.field "date" Decode.int)
 
 
@@ -155,18 +228,3 @@ nonEmptyStoryDecoder =
         (Decode.field "type" Decode.string)
         (Decode.field "id" Decode.string)
         (Decode.field "text" Decode.string)
-
-
-itemDecoder : Decode.Decoder Item
-itemDecoder =
-    Decode.map2 Item
-        (Decode.field "title" Decode.string)
-        (Decode.field "story" storyDecoder)
-
-
-itemEncoder : Item -> Encode.Value
-itemEncoder item =
-    Encode.object
-        [ ( "title", Encode.string item.title )
-        , ( "story", storyEncoder item.story )
-        ]
