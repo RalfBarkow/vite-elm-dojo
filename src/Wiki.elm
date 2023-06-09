@@ -109,8 +109,9 @@ editItemEncoder item =
 
 
 type Story
-    = Snippet StorySnippetAlias
-    | Future FutureAlias
+    = Future FutureAlias -- andThen CreateEvent
+    | AddFactory FactoryItemAlias
+    | Snippet StorySnippetAlias
     | Paragraph ParagraphItemAlias
     | EmptyStory
     | UnknownStory Decode.Value

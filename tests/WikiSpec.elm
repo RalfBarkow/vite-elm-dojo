@@ -87,6 +87,64 @@ decoder =
                             ]
                 in
                 Expect.equal (Decode.decodeString pageDecoder jsonString) (Ok expectedPage)
+        , test "Add Factory" <|
+            \() ->
+                let
+                    jsonString =
+                        """{
+  "title": "WikiSpec Story",
+  "story": [
+    {
+      "type": "factory",
+      "id": "d1493b7d30cfab68"
+    }
+  ],
+  "journal": [
+    {
+      "type": "create",
+      "item": {
+        "title": "WikiSpec Story",
+        "story": []
+      },
+      "date": 1686168396028
+    },
+    {
+      "item": {
+        "type": "factory",
+        "id": "d1493b7d30cfab68"
+      },
+      "id": "d1493b7d30cfab68",
+      "type": "add",
+      "date": 1686168405017
+    }
+  ]
+}"""
+
+                    expectedPage =
+                        Page
+                            -- TITLE
+                            "WikiSpec Story"
+                            -- STORY
+                            [ AddFactory
+                                { type_ = "factory"
+                                , id = "d1493b7d30cfab68"
+                                }
+                            ]
+                            -- JOURNAL
+                            [ Create
+                                { type_ = "create"
+                                , item = { title = "WikiSpec Story", story = EmptyStory }
+                                , date = 1686168396028
+                                }
+                            , Add
+                                { item = { type_ = "factory", id = "d1493b7d30cfab68" }
+                                , id = "d1493b7d30cfab68"
+                                , type_ = "add"
+                                , date = 1686168405017
+                                }
+                            ]
+                in
+                Expect.equal (Decode.decodeString pageDecoder jsonString) (Ok expectedPage)
         ]
 
 
