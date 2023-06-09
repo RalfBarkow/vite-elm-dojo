@@ -36,6 +36,7 @@ type Item
     = StoryItem StoryItemAlias
     | ParagraphItem ParagraphItemAlias
     | FactoryItem FactoryItemAlias
+    | EditItem EditItemAlias
 
 
 type alias StoryItemAlias =
@@ -50,6 +51,10 @@ type alias ParagraphItemAlias =
 
 type alias FactoryItemAlias =
     { type_ : String, id : String }
+
+
+type alias EditItemAlias =
+    { type_ : String, id : String, item : ParagraphItemAlias, date : Int }
 
 
 type Story
@@ -164,6 +169,44 @@ type alias EditEvent =
     { type_ : String, id : String, item : ParagraphItemAlias, date : Int }
 
 
+editItemDecoder : Decode.Decoder EditItemAlias
+editItemDecoder =
+    -- { type_ : String, id : String, item : ParagraphItemAlias, date : Int }
+    Decode.map4 EditItemAlias
+        (Decode.field "type" Decode.string)
+        (Decode.field "id" Decode.string)
+        (Decode.field "item" paragraphItemDecoder)
+        (Decode.field "date" Decode.int)
+
+
+paragraphItemDecoder : Decode.Decoder ParagraphItemAlias
+paragraphItemDecoder =
+    -- { type_ : String, id : String, text : String }
+    Decode.map3 ParagraphItemAlias
+        (Decode.field "type" Decode.string)
+        (Decode.field "id" Decode.string)
+        (Decode.field "text" Decode.string)
+
+
+paragraphItemEncoder : ParagraphItemAlias -> Encode.Value
+paragraphItemEncoder item =
+    -- { type_ : String, id : String, text : String }
+    Encode.object
+        [ ( "type", Encode.string "paragraph" )
+        , ( "id", Encode.string item.id )
+        , ( "text", Encode.string item.text )
+        ]
+
+
+editItemEncoder : EditItemAlias -> Encode.Value
+editItemEncoder item =
+    -- "type": "edit"
+    Encode.object
+        [ ( "type", Encode.string "edit" )
+        , ( "id", Encode.string item.id )
+        ]
+
+
 journalDecoder : Decode.Decoder Journal
 journalDecoder =
     Decode.oneOf
@@ -195,7 +238,7 @@ journalEncoder journal =
             Encode.object
                 [ ( "type_", Encode.string "edit" )
                 , ( "id", Encode.string event.id )
-                , ( "item", editItemEncoder event.item )
+                , ( "item", paragraphItemEncoder event.item )
                 , ( "date", Encode.int event.date )
                 ]
 
