@@ -1,13 +1,13 @@
-module Main exposing (Person, decodePerson, encodePerson, main)
+module Main exposing (main)
 
 import Browser
 import Html exposing (Html, button, div, h3, pre, text, textarea)
 import Html.Attributes exposing (cols, placeholder, rows)
 import Html.Events exposing (onClick, onInput)
-import Json.Decode as Decode exposing (Decoder)
-import Json.Decode.Pipeline exposing (required)
-import Json.Encode as Encode exposing (Value, object)
+import Json.Decode as Decode
+import Json.Encode as Encode
 import String exposing (trim)
+import Wiki exposing (Page, pageDecoder, pageEncoder)
 
 
 type alias Model =
@@ -19,14 +19,7 @@ type alias Model =
 
 type ParsedJson
     = NotParsed
-    | Parsed Person
-
-
-type alias Person =
-    { name : String
-    , age : Int
-    , hobbies : List String
-    }
+    | Parsed Wiki.Page
 
 
 init : () -> ( Model, Cmd Msg )
@@ -34,11 +27,35 @@ init _ =
     let
         rawData =
             """
-            {
-                "name": "John Doe",
-                "age": 30,
-                "hobbies": ["reading", "playing guitar"]
-            }
+{
+  "title": "Create New Page Test",
+  "story": [
+    {
+      "id": "fbd2c94f7cb40fbb",
+      "type": "future",
+      "text": "We could not find this page.",
+      "title": "Create New Page Test",
+      "create": {
+        "type": "create",
+        "item": {
+          "title": "Create New Page Test",
+          "story": []
+        },
+        "date": 1686265800897
+      }
+    }
+  ],
+  "journal": [
+    {
+      "type": "create",
+      "item": {
+        "title": "Create New Page Test",
+        "story": []
+      },
+      "date": 1686265800897
+    }
+  ]
+}
             """
     in
     ( { input = rawData, parsedJson = NotParsed, output = "" }, Cmd.none )
@@ -61,9 +78,9 @@ update msg model =
                     trim model.input
 
                 result =
-                    case Decode.decodeString decodePerson json of
+                    case Decode.decodeString Wiki.pageDecoder json of
                         Ok value ->
-                            ( { model | parsedJson = Parsed value, output = encodePerson value |> Encode.encode 0 }, Cmd.none )
+                            ( { model | parsedJson = Parsed value, output = Wiki.pageEncoder value |> Encode.encode 0 }, Cmd.none )
 
                         Err _ ->
                             ( { model | parsedJson = NotParsed, output = "" }, Cmd.none )
@@ -85,10 +102,10 @@ view model =
                 NotParsed ->
                     text "JSON not parsed. Please enter your data and click 'Parse JSON'."
 
-                Parsed person ->
+                Parsed page ->
                     div []
                         [ h3 [] [ text "Parsed JSON" ]
-                        , pre [] [ text (Debug.toString person) ]
+                        , pre [] [ text (Debug.toString page) ]
                         ]
             ]
         ]
@@ -102,28 +119,3 @@ main =
         , update = update
         , subscriptions = \_ -> Sub.none
         }
-
-
-
--- JSON Decoding
-
-
-decodePerson : Decoder Person
-decodePerson =
-    Decode.succeed Person
-        |> required "name" Decode.string
-        |> required "age" Decode.int
-        |> required "hobbies" (Decode.list Decode.string)
-
-
-
--- Elm Encoding
-
-
-encodePerson : Person -> Value
-encodePerson person =
-    object
-        [ ( "name", Encode.string person.name )
-        , ( "age", Encode.int person.age )
-        , ( "hobbies", Encode.list Encode.string person.hobbies )
-        ]
