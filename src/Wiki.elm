@@ -60,7 +60,7 @@ type alias EditItemAlias =
 type Story
     = NonEmptyStory NonEmptyStoryAlias
     | Future FutureAlias
-    | Paragraph { type_ : String, id : String, text : String }
+    | Paragraph ParagraphItemAlias
     | EmptyStory
     | UnknownStory Decode.Value
 
@@ -103,10 +103,17 @@ storyEncoder story =
                 , ( "title", Encode.string alias.title )
                 ]
 
+        Paragraph alias ->
+            Encode.object
+                [ ( "type", Encode.string alias.type_ )
+                , ( "id", Encode.string alias.id )
+                , ( "text", Encode.string alias.text )
+                ]
+
+        -- Add encoders for other story variants as needed
         EmptyStory ->
             Encode.list identity []
 
-        -- Add encoders for other story variants as needed
         _ ->
             Encode.null
 
@@ -152,7 +159,7 @@ factoryItemDecoder : Decode.Decoder FactoryItemAlias
 factoryItemDecoder =
     -- { type_ : String, id : String }
     Decode.map2 FactoryItemAlias
-        (Decode.field "type_" Decode.string)
+        (Decode.field "type" Decode.string)
         (Decode.field "id" Decode.string)
 
 
@@ -230,13 +237,13 @@ journalEncoder journal =
             Encode.object
                 [ ( "item", factoryItemEncoder event.item )
                 , ( "id", Encode.string event.id )
-                , ( "type_", Encode.string "add" )
+                , ( "type", Encode.string "add" )
                 , ( "date", Encode.int event.date )
                 ]
 
         Edit event ->
             Encode.object
-                [ ( "type_", Encode.string "edit" )
+                [ ( "type", Encode.string "edit" )
                 , ( "id", Encode.string event.id )
                 , ( "item", paragraphItemEncoder event.item )
                 , ( "date", Encode.int event.date )
