@@ -254,7 +254,6 @@ journalEncoder journal =
                 ]
 
         Add event ->
-            --  { item = Item, id = String, type_ = String, date = Int }
             Encode.object
                 [ ( "item", factoryItemEncoder event.item )
                 , ( "id", Encode.string event.id )
