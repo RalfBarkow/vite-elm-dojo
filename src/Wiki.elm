@@ -149,6 +149,7 @@ storyDecoder : Decode.Decoder Story
 storyDecoder =
     Decode.oneOf
         [ Decode.map Future futureEventDecoder
+        , Decode.map AddFactory factoryItemDecoder
         , Decode.map Snippet storySnippetDecoder
         , Decode.map (\_ -> EmptyStory) (Decode.succeed EmptyStory)
         ]
@@ -232,6 +233,15 @@ type alias AddEvent =
     { item : FactoryItemAlias, id : String, type_ : String, date : Int }
 
 
+addEventDecoder : Decode.Decoder AddEvent
+addEventDecoder =
+    Decode.map4 AddEvent
+        (Decode.field "item" factoryItemDecoder)
+        (Decode.field "id" Decode.string)
+        (Decode.field "type" Decode.string)
+        (Decode.field "date" Decode.int)
+
+
 type alias EditEvent =
     { type_ : String, id : String, item : ParagraphItemAlias, date : Int }
 
@@ -240,6 +250,7 @@ journalDecoder : Decode.Decoder Journal
 journalDecoder =
     Decode.oneOf
         [ Decode.map Create createEventDecoder
+        , Decode.map Add addEventDecoder
         , Decode.map UnknownJournal Decode.value
         ]
 
