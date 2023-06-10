@@ -149,8 +149,9 @@ storyDecoder : Decode.Decoder Story
 storyDecoder =
     Decode.oneOf
         [ Decode.map Future futureEventDecoder
-        , Decode.map AddFactory factoryItemDecoder
         , Decode.map Snippet storySnippetDecoder
+
+        --  , Decode.map AddFactory factoryItemDecoder
         , Decode.map (\_ -> EmptyStory) (Decode.succeed EmptyStory)
         ]
 
