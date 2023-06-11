@@ -7,7 +7,7 @@ import Expect
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Test exposing (..)
-import Wiki exposing (Journal(..), Page, Story(..), pageDecoder, pageEncoder)
+import Wiki exposing (Event(..), Page, Story(..), pageDecoder, pageEncoder)
 
 
 rawData : String

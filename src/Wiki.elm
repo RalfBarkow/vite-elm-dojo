@@ -1,4 +1,4 @@
-module Wiki exposing (Journal(..), Page, Story(..), pageDecoder, pageEncoder)
+module Wiki exposing (Event(..), Page, Story(..), pageDecoder, pageEncoder)
 
 import Json.Decode as Decode
 import Json.Encode as Encode
@@ -7,7 +7,7 @@ import Json.Encode as Encode
 type alias Page =
     { title : String
     , story : List Story
-    , journal : List Journal
+    , journal : List Event
     }
 
 
@@ -16,7 +16,7 @@ pageDecoder =
     Decode.map3 Page
         (Decode.field "title" Decode.string)
         (Decode.field "story" (Decode.list storyDecoder))
-        (Decode.field "journal" (Decode.list journalDecoder))
+        (Decode.field "journal" (Decode.list eventDecoder))
 
 
 pageEncoder : Page -> Encode.Value
@@ -150,8 +150,7 @@ storyDecoder =
     Decode.oneOf
         [ Decode.map Future futureEventDecoder
         , Decode.map Snippet storySnippetDecoder
-
-        --  , Decode.map AddFactory factoryItemDecoder
+        , Decode.map AddFactory factoryItemDecoder
         , Decode.map (\_ -> EmptyStory) (Decode.succeed EmptyStory)
         ]
 
@@ -211,13 +210,25 @@ storyItemEncoder item =
 type Journal
     = EmptyJournal
     | NonEmptyJournal (List Event)
-    | UnknownJournal Decode.Value
 
 
 type Event
     = Create CreateEvent
     | Add AddEvent
     | Edit EditEvent
+    | Unknown Decode.Value
+
+
+eventDecoder : Decode.Decoder Event
+eventDecoder =
+    Decode.oneOf
+        [ Decode.map Create createEventDecoder
+        , Decode.map Add addEventDecoder
+
+        -- , Decode.map Edit editEventDecoder
+        -- Add decoders for other journal event variants as needed
+        , Decode.map Unknown Decode.value
+        ]
 
 
 type alias CreateEvent =
@@ -248,22 +259,6 @@ addEventDecoder =
 
 type alias EditEvent =
     { type_ : String, id : String, item : ParagraphItemAlias, date : Int }
-
-
-journalDecoder : Decode.Decoder Journal
-journalDecoder =
-    Decode.map NonEmptyJournal (Decode.list eventDecoder)
-
-
-eventDecoder : Decode.Decoder Event
-eventDecoder =
-    Decode.oneOf
-        [ Decode.map Create createEventDecoder
-        , Decode.map Add addEventDecoder
-
-        -- , Decode.map Edit editEventDecoder
-        -- Add decoders for other event variants as needed
-        ]
 
 
 journalEncoder : Event -> Encode.Value
@@ -304,6 +299,6 @@ journalEncoder event =
                 , ( "date", Encode.int editEvent.date )
                 ]
 
-        -- Add encoders for other journal variants as needed
-        _ ->
+        -- Add encoders for other journal event variants as needed
+        Unknown _ ->
             Encode.null
