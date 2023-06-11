@@ -210,11 +210,14 @@ storyItemEncoder item =
 
 type Journal
     = EmptyJournal
-    | NonEmptyJournal
-    | Create CreateEvent
+    | NonEmptyJournal (List Event)
+    | UnknownJournal Decode.Value
+
+
+type Event
+    = Create CreateEvent
     | Add AddEvent
     | Edit EditEvent
-    | UnknownJournal Decode.Value
 
 
 type alias CreateEvent =
@@ -249,37 +252,56 @@ type alias EditEvent =
 
 journalDecoder : Decode.Decoder Journal
 journalDecoder =
+    Decode.map NonEmptyJournal (Decode.list eventDecoder)
+
+
+eventDecoder : Decode.Decoder Event
+eventDecoder =
     Decode.oneOf
         [ Decode.map Create createEventDecoder
         , Decode.map Add addEventDecoder
-        , Decode.map UnknownJournal Decode.value
+
+        -- , Decode.map Edit editEventDecoder
+        -- Add decoders for other event variants as needed
         ]
 
 
-journalEncoder : Journal -> Encode.Value
-journalEncoder journal =
-    case journal of
-        Create event ->
+journalEncoder : Event -> Encode.Value
+journalEncoder event =
+    case event of
+        Create createEvent ->
+            let
+                eventItem =
+                    createEvent.item
+            in
             Encode.object
                 [ ( "type", Encode.string "create" )
-                , ( "item", storyItemEncoder event.item )
-                , ( "date", Encode.int event.date )
+                , ( "item", storyItemEncoder eventItem )
+                , ( "date", Encode.int createEvent.date )
                 ]
 
-        Add event ->
+        Add addEvent ->
+            let
+                eventItem =
+                    addEvent.item
+            in
             Encode.object
-                [ ( "item", factoryItemEncoder event.item )
-                , ( "id", Encode.string event.id )
+                [ ( "item", factoryItemEncoder eventItem )
+                , ( "id", Encode.string addEvent.id )
                 , ( "type", Encode.string "add" )
-                , ( "date", Encode.int event.date )
+                , ( "date", Encode.int addEvent.date )
                 ]
 
-        Edit event ->
+        Edit editEvent ->
+            let
+                eventItem =
+                    editEvent.item
+            in
             Encode.object
                 [ ( "type", Encode.string "edit" )
-                , ( "id", Encode.string event.id )
-                , ( "item", paragraphItemEncoder event.item )
-                , ( "date", Encode.int event.date )
+                , ( "id", Encode.string editEvent.id )
+                , ( "item", paragraphItemEncoder eventItem )
+                , ( "date", Encode.int editEvent.date )
                 ]
 
         -- Add encoders for other journal variants as needed
