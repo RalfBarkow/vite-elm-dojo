@@ -7,7 +7,7 @@ import Html.Events exposing (onClick, onInput)
 import Json.Decode as Decode
 import Json.Encode as Encode
 import String exposing (trim)
-import Wiki exposing (Page, pageDecoder, pageEncoder)
+import Wiki
 
 
 type alias Model =
@@ -107,6 +107,10 @@ view model =
                         [ h3 [] [ text "Parsed JSON" ]
                         , pre [] [ text (Debug.toString page) ]
                         ]
+            ]
+        , div []
+            [ h3 [] [ text "Output" ]
+            , pre [] [ text model.output ]
             ]
         ]
 

@@ -109,7 +109,7 @@ editItemEncoder item =
 
 
 type Story
-    = Future FutureAlias -- andThen CreateEvent
+    = Future FutureAlias
     | AddFactory FactoryItemAlias
     | Snippet StorySnippetAlias
     | Paragraph ParagraphItemAlias
