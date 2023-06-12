@@ -20,6 +20,7 @@ type alias Model =
 type ParsedJson
     = NotParsed
     | Parsed Wiki.Page
+    | UnknownEventMsg String
 
 
 init : () -> ( Model, Cmd Msg )
@@ -77,12 +78,15 @@ view : Model -> Html Msg
 view model =
     div []
         [ div []
+            -- UpdateInput
             [ textarea [ placeholder "Enter JSON here", rows 10, cols 80, onInput UpdateInput ] [ text model.input ]
             ]
         , div []
+            -- ParseJson button
             [ button [ onClick ParseJson ] [ text "Parse JSON" ]
             ]
         , div []
+            -- ParseJson feedback
             [ case model.parsedJson of
                 NotParsed ->
                     text "JSON not parsed. Please enter your data and click 'Parse JSON'."
@@ -94,6 +98,7 @@ view model =
                         ]
             ]
         , div []
+            -- Output
             [ h3 [] [ text "Output" ]
             , pre [] [ text model.output ]
             ]
