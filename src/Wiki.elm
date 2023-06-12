@@ -73,7 +73,7 @@ factoryItemEncoder item =
 
 type Story
     = Future FutureAlias
-    | AddFactory FactoryItemAlias
+    | AddFactory
     | Snippet StorySnippetAlias
     | Paragraph ParagraphItemAlias
     | EmptyStory
@@ -173,7 +173,7 @@ type Event
     = Create CreateEvent
     | Add AddEvent
     | Edit EditEvent
-    | Unknown Decode.Value
+    | Unknown
 
 
 eventDecoder : Decode.Decoder Event
@@ -223,6 +223,7 @@ journalEncoder event =
     case event of
         Create createEvent ->
             let
+                eventItem : StoryItemAlias
                 eventItem =
                     createEvent.item
             in
@@ -234,6 +235,7 @@ journalEncoder event =
 
         Add addEvent ->
             let
+                eventItem : FactoryItemAlias
                 eventItem =
                     addEvent.item
             in
@@ -246,6 +248,7 @@ journalEncoder event =
 
         Edit editEvent ->
             let
+                eventItem : ParagraphItemAlias
                 eventItem =
                     editEvent.item
             in

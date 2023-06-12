@@ -1,8 +1,8 @@
 module ComplexNumberSpec exposing (suite)
 
-import ComplexNumber exposing (..)
+import ComplexNumber exposing (conjugate, modulus, modulusSquared)
 import Expect
-import Test exposing (..)
+import Test exposing (Test)
 
 
 suite : Test
@@ -11,9 +11,11 @@ suite =
         [ test "Modulus" <|
             \() ->
                 let
+                    complex : { real : number, imaginary : number }
                     complex =
                         { real = 3, imaginary = 4 }
 
+                    expectedModulus : number
                     expectedModulus =
                         5
                 in
@@ -21,9 +23,11 @@ suite =
         , test "ModulusSquared" <|
             \() ->
                 let
+                    complex : { real : number, imaginary : number }
                     complex =
                         { real = 3, imaginary = 4 }
 
+                    expectedModulusSquared : number
                     expectedModulusSquared =
                         25
                 in
@@ -31,9 +35,11 @@ suite =
         , test "Conjugate" <|
             \() ->
                 let
+                    complex : { real : number, imaginary : number }
                     complex =
                         { real = 3, imaginary = 4 }
 
+                    expectedConjugate : { real : number, imaginary : number }
                     expectedConjugate =
                         { real = 3, imaginary = -4 }
                 in

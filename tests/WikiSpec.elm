@@ -6,7 +6,7 @@ module WikiSpec exposing (decoder, encoder)
 import Expect
 import Json.Decode as Decode
 import Json.Encode as Encode
-import Test exposing (..)
+import Test exposing (Test)
 import Wiki exposing (Event(..), Page, Story(..), pageDecoder, pageEncoder)
 
 
@@ -32,9 +32,11 @@ decoder =
         [ test "Future" <|
             \() ->
                 let
+                    jsonString : String
                     jsonString =
                         rawData
 
+                    expectedPage : Page
                     expectedPage =
                         Page
                             -- TITLE
@@ -54,6 +56,7 @@ decoder =
         , test "Create" <|
             \() ->
                 let
+                    jsonString : String
                     jsonString =
                         """
 {
@@ -72,6 +75,7 @@ decoder =
 }
 """
 
+                    expectedPage : Page
                     expectedPage =
                         Page
                             -- TITLE
@@ -90,6 +94,7 @@ decoder =
         , test "Add Factory" <|
             \() ->
                 let
+                    jsonString : String
                     jsonString =
                         """{
   "title": "WikiSpec Story",
@@ -120,6 +125,7 @@ decoder =
   ]
 }"""
 
+                    expectedPage : String
                     expectedPage =
                         Page
                             -- TITLE
@@ -154,6 +160,7 @@ encoder =
         [ test "Future" <|
             \() ->
                 let
+                    page : Page
                     page =
                         Page
                             -- TITLE
@@ -169,9 +176,11 @@ encoder =
                             -- JOURNAL
                             []
 
+                    expectedJson : String
                     expectedJson =
                         rawData
 
+                    encoded : String
                     encoded =
                         Encode.encode 2 (pageEncoder page)
                 in
@@ -179,6 +188,7 @@ encoder =
         , test "Create" <|
             \() ->
                 let
+                    page : Page
                     page =
                         Page
                             -- TITLE
@@ -193,6 +203,7 @@ encoder =
                                 }
                             ]
 
+                    expectedJson : String
                     expectedJson =
                         """{
   "title": "Create New Page Test",
@@ -209,6 +220,7 @@ encoder =
   ]
 }"""
 
+                    encoded : String
                     encoded =
                         Encode.encode 2 (pageEncoder page)
                 in
@@ -216,6 +228,7 @@ encoder =
         , test "Add Factory and Paragraph" <|
             \() ->
                 let
+                    page : Page
                     page =
                         Page
                             -- TITLE
@@ -247,6 +260,7 @@ encoder =
                                 }
                             ]
 
+                    expectedJson : String
                     expectedJson =
                         """{
   "title": "Create New Page Test",
@@ -288,6 +302,7 @@ encoder =
   ]
 }"""
 
+                    encoded : String
                     encoded =
                         Encode.encode 2 (pageEncoder page)
                 in

@@ -25,6 +25,7 @@ type ParsedJson
 init : () -> ( Model, Cmd Msg )
 init _ =
     let
+        rawData : String.String
         rawData =
             """
 {
@@ -59,6 +60,7 @@ update msg model =
 
         ParseJson ->
             let
+                json : String.String
                 json =
                     trim model.input
             in

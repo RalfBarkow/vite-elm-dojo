@@ -12,10 +12,12 @@ suite =
             [ Test.test "handles UpdateInput message" <|
                 \() ->
                     let
+                        model : model
                         model =
                             Main.init ()
                                 |> Tuple.first
 
+                        expected : model
                         expected =
                             { model | input = "Updated input" }
                     in
@@ -23,10 +25,12 @@ suite =
             , Test.test "handles ParseJson message" <|
                 \() ->
                     let
+                        model : model
                         model =
                             Main.init ()
                                 |> Tuple.first
 
+                        expected : model
                         expected =
                             { model | parsedJson = Main.Parsed (Main.Story []), output = "Encoded JSON" }
                     in
@@ -34,10 +38,12 @@ suite =
             , Test.test "handles UnknownEventMsg message" <|
                 \() ->
                     let
+                        model : model
                         model =
                             Main.init ()
                                 |> Tuple.first
 
+                        expected : model
                         expected =
                             model
                     in
