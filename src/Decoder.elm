@@ -1,7 +1,6 @@
 module Decoder exposing (decoder, handleDecodedValue)
 
 import Json.Decode as Decode
-import Wiki exposing (..)
 
 
 decoder : Decode.Decoder String

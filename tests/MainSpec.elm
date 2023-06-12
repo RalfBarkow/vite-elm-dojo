@@ -1,8 +1,7 @@
 module MainSpec exposing (suite)
 
 import Expect
-import Main exposing (main)
-import Msg
+import Main
 import Test exposing (Test)
 
 

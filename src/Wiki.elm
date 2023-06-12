@@ -1,4 +1,4 @@
-module Wiki exposing (Event(..), Page, Story(..), pageDecoder, pageEncoder)
+module Wiki exposing (AddEvent, CreateEvent, EditEvent, Event(..), FactoryItemAlias, FutureAlias, Page, ParagraphItemAlias, Story(..), StoryItemAlias, StorySnippetAlias, pageDecoder, pageEncoder)
 
 import Json.Decode as Decode
 import Json.Encode as Encode
@@ -32,13 +32,6 @@ pageEncoder page =
 -- The "story" is a collection of paragraphs and paragraph-like items.
 
 
-type Item
-    = StoryItem StoryItemAlias
-    | ParagraphItem ParagraphItemAlias
-    | FactoryItem FactoryItemAlias
-    | EditItem EditItemAlias
-
-
 type alias StoryItemAlias =
     { title : String
     , story : Story
@@ -47,14 +40,6 @@ type alias StoryItemAlias =
 
 type alias ParagraphItemAlias =
     { type_ : String, id : String, text : String }
-
-
-paragraphItemDecoder : Decode.Decoder ParagraphItemAlias
-paragraphItemDecoder =
-    Decode.map3 ParagraphItemAlias
-        (Decode.field "type" Decode.string)
-        (Decode.field "id" Decode.string)
-        (Decode.field "text" Decode.string)
 
 
 paragraphItemEncoder : ParagraphItemAlias -> Encode.Value
@@ -86,35 +71,12 @@ factoryItemEncoder item =
         ]
 
 
-type alias EditItemAlias =
-    { type_ : String, id : String, item : ParagraphItemAlias, date : Int }
-
-
-editItemDecoder : Decode.Decoder EditItemAlias
-editItemDecoder =
-    Decode.map4 EditItemAlias
-        (Decode.field "type" Decode.string)
-        (Decode.field "id" Decode.string)
-        (Decode.field "item" paragraphItemDecoder)
-        (Decode.field "date" Decode.int)
-
-
-editItemEncoder : EditItemAlias -> Encode.Value
-editItemEncoder item =
-    -- "type": "edit"
-    Encode.object
-        [ ( "type", Encode.string "edit" )
-        , ( "id", Encode.string item.id )
-        ]
-
-
 type Story
     = Future FutureAlias
     | AddFactory FactoryItemAlias
     | Snippet StorySnippetAlias
     | Paragraph ParagraphItemAlias
     | EmptyStory
-    | UnknownStory Decode.Value
 
 
 type alias FutureAlias =
@@ -205,11 +167,6 @@ storyItemEncoder item =
 
 
 -- The "journal" collects story edits.
-
-
-type Journal
-    = EmptyJournal
-    | NonEmptyJournal (List Event)
 
 
 type Event

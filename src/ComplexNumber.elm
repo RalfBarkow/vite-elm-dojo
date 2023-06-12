@@ -1,4 +1,4 @@
-module ComplexNumber exposing (..)
+module ComplexNumber exposing (Complex, conjugate, modulus, modulusSquared)
 
 
 type alias Complex =

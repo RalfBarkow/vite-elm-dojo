@@ -1,4 +1,4 @@
-module Main exposing (main)
+module Main exposing (Model, Msg, ParsedJson, main)
 
 import Browser
 import Html exposing (Html, button, div, h3, pre, text, textarea)
@@ -20,7 +20,6 @@ type alias Model =
 type ParsedJson
     = NotParsed
     | Parsed Wiki.Page
-    | UnknownEventMsg String
 
 
 init : () -> ( Model, Cmd Msg )
@@ -62,16 +61,13 @@ update msg model =
             let
                 json =
                     trim model.input
-
-                result =
-                    case Decode.decodeString Wiki.pageDecoder json of
-                        Ok value ->
-                            ( { model | parsedJson = Parsed value, output = Wiki.pageEncoder value |> Encode.encode 0 }, Cmd.none )
-
-                        Err _ ->
-                            ( { model | parsedJson = NotParsed, output = "" }, Cmd.none )
             in
-            result
+            case Decode.decodeString Wiki.pageDecoder json of
+                Ok value ->
+                    ( { model | parsedJson = Parsed value, output = Wiki.pageEncoder value |> Encode.encode 0 }, Cmd.none )
+
+                Err _ ->
+                    ( { model | parsedJson = NotParsed, output = "" }, Cmd.none )
 
 
 view : Model -> Html Msg
