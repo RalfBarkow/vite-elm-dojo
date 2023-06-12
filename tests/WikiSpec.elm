@@ -28,8 +28,8 @@ rawData =
 
 decoder : Test
 decoder =
-    describe "Page Decoder"
-        [ test "Future" <|
+    Test.describe "Page Decoder"
+        [ Test.test "Future" <|
             \() ->
                 let
                     jsonString : String
@@ -53,7 +53,7 @@ decoder =
                             []
                 in
                 Expect.equal (Decode.decodeString pageDecoder jsonString) (Ok expectedPage)
-        , test "Create" <|
+        , Test.test "Create" <|
             \() ->
                 let
                     jsonString : String
@@ -91,7 +91,7 @@ decoder =
                             ]
                 in
                 Expect.equal (Decode.decodeString pageDecoder jsonString) (Ok expectedPage)
-        , test "Add Factory" <|
+        , Test.test "Add Factory" <|
             \() ->
                 let
                     jsonString : String
@@ -125,7 +125,7 @@ decoder =
   ]
 }"""
 
-                    expectedPage : String
+                    expectedPage : Page
                     expectedPage =
                         Page
                             -- TITLE
@@ -156,8 +156,8 @@ decoder =
 
 encoder : Test
 encoder =
-    describe "Page Encoder"
-        [ test "Future" <|
+    Test.describe "Page Encoder"
+        [ Test.test "Future" <|
             \() ->
                 let
                     page : Page
@@ -185,7 +185,7 @@ encoder =
                         Encode.encode 2 (pageEncoder page)
                 in
                 Expect.equal encoded expectedJson
-        , test "Create" <|
+        , Test.test "Create" <|
             \() ->
                 let
                     page : Page
@@ -225,7 +225,7 @@ encoder =
                         Encode.encode 2 (pageEncoder page)
                 in
                 Expect.equal encoded expectedJson
-        , test "Add Factory and Paragraph" <|
+        , Test.test "Add Factory and Paragraph" <|
             \() ->
                 let
                     page : Page

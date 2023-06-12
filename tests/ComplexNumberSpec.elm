@@ -7,8 +7,8 @@ import Test exposing (Test)
 
 suite : Test
 suite =
-    describe "ComplexNumber tests"
-        [ test "Modulus" <|
+    Test.describe "ComplexNumber tests"
+        [ Test.test "Modulus" <|
             \() ->
                 let
                     complex : { real : number, imaginary : number }
@@ -20,7 +20,7 @@ suite =
                         5
                 in
                 Expect.equal (modulus complex) expectedModulus
-        , test "ModulusSquared" <|
+        , Test.test "ModulusSquared" <|
             \() ->
                 let
                     complex : { real : number, imaginary : number }
@@ -32,7 +32,7 @@ suite =
                         25
                 in
                 Expect.equal (modulusSquared complex) expectedModulusSquared
-        , test "Conjugate" <|
+        , Test.test "Conjugate" <|
             \() ->
                 let
                     complex : { real : number, imaginary : number }

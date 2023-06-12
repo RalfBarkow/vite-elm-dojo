@@ -1,8 +1,10 @@
 module MainSpec exposing (suite)
 
 import Expect
-import Main
+import Json.Encode as Encode
+import Main exposing (Model, Msg, ParsedJson, init, main)
 import Test exposing (Test)
+import Wiki
 
 
 suite : Test
@@ -12,12 +14,12 @@ suite =
             [ Test.test "handles UpdateInput message" <|
                 \() ->
                     let
-                        model : model
+                        model : Model
                         model =
                             Main.init ()
                                 |> Tuple.first
 
-                        expected : model
+                        expected : Model
                         expected =
                             { model | input = "Updated input" }
                     in
@@ -25,25 +27,25 @@ suite =
             , Test.test "handles ParseJson message" <|
                 \() ->
                     let
-                        model : model
+                        model : Model
                         model =
                             Main.init ()
                                 |> Tuple.first
 
-                        expected : model
+                        expected : Model
                         expected =
-                            { model | parsedJson = Main.Parsed (Main.Story []), output = "Encoded JSON" }
+                            { model | parsedJson = Parsed value, output = Wiki.pageEncoder value |> Encode.encode 0 }
                     in
                     Expect.equal expected model
             , Test.test "handles UnknownEventMsg message" <|
                 \() ->
                     let
-                        model : model
+                        model : Model
                         model =
                             Main.init ()
                                 |> Tuple.first
 
-                        expected : model
+                        expected : Model
                         expected =
                             model
                     in

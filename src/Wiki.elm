@@ -73,7 +73,7 @@ factoryItemEncoder item =
 
 type Story
     = Future FutureAlias
-    | AddFactory
+    | AddFactory FactoryItemAlias
     | Snippet StorySnippetAlias
     | Paragraph ParagraphItemAlias
     | EmptyStory
@@ -173,7 +173,7 @@ type Event
     = Create CreateEvent
     | Add AddEvent
     | Edit EditEvent
-    | Unknown
+    | Unknown Decode.Value
 
 
 eventDecoder : Decode.Decoder Event
