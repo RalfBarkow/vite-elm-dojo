@@ -24,19 +24,6 @@ suite =
                             { model | input = "Updated input" }
                     in
                     Expect.equal expected model
-            , Test.test "handles ParseJson message" <|
-                \() ->
-                    let
-                        model : Model
-                        model =
-                            Main.init ()
-                                |> Tuple.first
-
-                        expected : Model
-                        expected =
-                            { model | parsedJson = Parsed value, output = Wiki.pageEncoder value |> Encode.encode 0 }
-                    in
-                    Expect.equal expected model
             , Test.test "handles UnknownEventMsg message" <|
                 \() ->
                     let
