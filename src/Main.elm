@@ -29,15 +29,17 @@ init _ =
             """
 {
   "title": "2023-06-12",
-  "story": [
+  "story": [],
+  "journal": [
     {
-      "id": "d495b2686204cd05",
-      "type": "future",
-      "text": "We could not find this page.",
-      "title": "2023-06-12"
+      "type": "create",
+      "item": {
+        "title": "2023-06-12",
+        "story": []
+      },
+      "date": 1686550113460
     }
-  ],
-  "journal": []
+  ]
 }
             """
     in
