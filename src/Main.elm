@@ -28,33 +28,16 @@ init _ =
         rawData =
             """
 {
-  "title": "Create New Page Test",
+  "title": "2023-06-12",
   "story": [
     {
-      "id": "fbd2c94f7cb40fbb",
+      "id": "d495b2686204cd05",
       "type": "future",
       "text": "We could not find this page.",
-      "title": "Create New Page Test",
-      "create": {
-        "type": "create",
-        "item": {
-          "title": "Create New Page Test",
-          "story": []
-        },
-        "date": 1686265800897
-      }
+      "title": "2023-06-12"
     }
   ],
-  "journal": [
-    {
-      "type": "create",
-      "item": {
-        "title": "Create New Page Test",
-        "story": []
-      },
-      "date": 1686265800897
-    }
-  ]
+  "journal": []
 }
             """
     in
