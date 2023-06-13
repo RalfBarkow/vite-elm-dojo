@@ -32,4 +32,14 @@ suite =
                     |> clickButton "Parse JSON"
                     |> expectViewHas
                         [ text "Parsed JSON" ]
+        , Test.test "handle UnknownEvent" <|
+            \() ->
+                ProgramTest.createElement
+                    { init = Main.init
+                    , update = Main.update
+                    , view = Main.view
+                    }
+                    |> start ()
+                    |> expectViewHas
+                        [ text "Unknown <internals>" ]
         ]
