@@ -1,43 +1,25 @@
 module MainSpec exposing (suite)
 
-import Expect
-import Json.Encode as Encode
-import Main exposing (Model, Msg, ParsedJson, init, main)
+import Main
+import ProgramTest exposing (clickButton, expectViewHas, start)
 import Test exposing (Test)
-import Wiki
+import Test.Html.Selector exposing (text)
 
 
 suite : Test
 suite =
     Test.describe "Main"
-        [ Test.describe "update"
-            [ Test.test "handles UpdateInput message" <|
-                \() ->
-                    let
-                        model : Model
-                        model =
-                            Main.init ()
-                                |> Tuple.first
-
-                        expected : Model
-                        expected =
-                            { model | input = "Updated input" }
-                    in
-                    Expect.equal expected model
-            , Test.test "handles UnknownEventMsg message" <|
-                \() ->
-                    let
-                        model : Model
-                        model =
-                            Main.init ()
-                                |> Tuple.first
-
-                        expected : Model
-                        expected =
-                            model
-                    in
-                    Expect.equal expected model
-            ]
-
-        -- Add more test cases if needed
+        [ Test.test
+            "clickButton 'Parse JSON'"
+          <|
+            \() ->
+                ProgramTest.createElement
+                    { init = Main.init
+                    , update = Main.update
+                    , view = Main.view
+                    }
+                    |> start ()
+                    |> clickButton "Parse JSON"
+                    |> expectViewHas
+                        [ text "Parsed JSON" ]
         ]

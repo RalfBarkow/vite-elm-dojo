@@ -1,4 +1,4 @@
-module Main exposing (Model, Msg, ParsedJson, init, main)
+module Main exposing (Model, Msg, ParsedJson, init, main, update, view)
 
 import Browser
 import Html exposing (Html, button, div, h3, pre, text, textarea)
