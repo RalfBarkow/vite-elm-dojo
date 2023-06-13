@@ -9,7 +9,17 @@ import Test.Html.Selector exposing (text)
 suite : Test
 suite =
     Test.describe "Main"
-        [ Test.test
+        [ Test.test "JSON not parsed" <|
+            \() ->
+                ProgramTest.createElement
+                    { init = Main.init
+                    , update = Main.update
+                    , view = Main.view
+                    }
+                    |> start ()
+                    |> expectViewHas
+                        [ text "JSON not parsed. Please enter your data and click 'Parse JSON'." ]
+        , Test.test
             "clickButton 'Parse JSON'"
           <|
             \() ->
