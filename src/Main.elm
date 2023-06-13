@@ -50,6 +50,7 @@ init _ =
 type Msg
     = UpdateInput String
     | ParseJson
+    | Unknown Decode.Value
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -70,6 +71,12 @@ update msg model =
 
                 Err _ ->
                     ( { model | parsedJson = NotParsed, output = "" }, Cmd.none )
+
+        Unknown internals ->
+            -- Handle the Unknown <internals> event with the JSON data
+            -- You can parse the JSON, update the model, or perform any other actions
+            -- based on the jsonData
+            ( model, Cmd.none )
 
 
 view : Model -> Html Msg
