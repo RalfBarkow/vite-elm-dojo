@@ -1,53 +1,88 @@
 module Main exposing (main)
 
-import Html exposing (Html, a, text)
-import Html.Attributes exposing (href)
-import String exposing (contains, split)
+import Browser
+import Html exposing (Html, button, div, h2, input, text)
+import Html.Attributes exposing (class, placeholder, value)
+import Html.Events exposing (onClick, onInput)
+import Parser exposing (..)
 
 
 type alias WikiLink =
     { label : String
-    , target : String
     }
 
 
-parseWikiLink : String -> Maybe WikiLink
-parseWikiLink input =
+whitespace : Parser ()
+whitespace =
+    chompWhile (\c -> c == ' ')
+
+
+wikiLinkParser : Parser WikiLink
+wikiLinkParser =
+    succeed WikiLink
+        |. symbol "[["
+        |= (getChompedString <| chompWhile (\c -> c /= ']'))
+        |. symbol "]]"
+
+
+parseWikiLink : String -> Result (List Parser.DeadEnd) WikiLink
+parseWikiLink str =
+    Parser.run wikiLinkParser str
+
+
+type alias Model =
+    { input : String
+    , wikiLink : Result (List DeadEnd) WikiLink
+    }
+
+
+initialModel : Model
+initialModel =
+    { input = ""
+    , wikiLink = Err []
+    }
+
+
+type Msg
+    = Go
+    | Input String
+
+
+update : Msg -> Model -> Model
+update msg model =
+    case msg of
+        Go ->
+            { model | wikiLink = parseWikiLink model.input }
+
+        Input s ->
+            { model | input = s }
+
+
+view : Model -> Html Msg
+view model =
     let
-        parts =
-            split "]]" input
+        wikiLinkOutput =
+            case model.wikiLink of
+                Err [] ->
+                    "No input parsed"
+
+                Err deadEnds ->
+                    "Errors: " ++ Debug.toString model.wikiLink
+
+                Ok wikiLink ->
+                    Debug.toString wikiLink.label
     in
-    case parts of
-        [ label, target ] ->
-            if contains "[[" label then
-                Just { label = String.dropLeft 2 label, target = target }
-
-            else
-                Nothing
-
-        _ ->
-            Nothing
+    div []
+        [ input [ placeholder "Wiki Link", onInput Input, value model.input ] []
+        , button [ onClick Go ] [ text "Parse" ]
+        , div [ class "result" ] [ text wikiLinkOutput ]
+        ]
 
 
-renderWikiLink : WikiLink -> Html msg
-renderWikiLink link =
-    a [ Html.Attributes.href link.target ] [ Html.text link.label ]
-
-
-main : Html msg
+main : Program () Model Msg
 main =
-    let
-        wikiLinkText : String
-        wikiLinkText =
-            "[[OpenAI]]"
-
-        maybeWikiLink : Maybe WikiLink
-        maybeWikiLink =
-            parseWikiLink wikiLinkText
-    in
-    case maybeWikiLink of
-        Just link ->
-            renderWikiLink link
-
-        Nothing ->
-            text "Invalid Wiki Link"
+    Browser.sandbox
+        { init = initialModel
+        , view = view
+        , update = update
+        }
