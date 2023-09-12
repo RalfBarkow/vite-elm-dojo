@@ -8,7 +8,7 @@ import Parser exposing (..)
 
 
 type alias WikiLink =
-    { label : String
+    { title : String
     }
 
 
@@ -70,7 +70,7 @@ view model =
                     "Errors: " ++ Debug.toString model.wikiLink
 
                 Ok wikiLink ->
-                    Debug.toString wikiLink.label
+                    Debug.toString wikiLink.title
     in
     div []
         [ input [ placeholder "Wiki Link", onInput Input, value model.input ] []
