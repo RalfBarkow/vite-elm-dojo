@@ -69,7 +69,7 @@ decoder =
         "title": "Create New Page Test",
         "story": []
       },
-      "date": 1685700575889
+      "date": 1693518954747
     }
   ]
 }
@@ -85,68 +85,150 @@ decoder =
                             -- JOURNAL
                             [ Create
                                 { type_ = "create"
-                                , item = { title = "Create New Page Test", story = EmptyStory }
-                                , date = 1685700575889
+                                , item = { title = "Create New Page Test", story = EmptyContainer }
+                                , date = 1693518954747
                                 }
                             ]
                 in
                 Expect.equal (Decode.decodeString pageDecoder jsonString) (Ok expectedPage)
-        , Test.test "Add Factory" <|
+        , Test.test "Add Factory (decoder)" <|
             \() ->
                 let
                     jsonString : String
                     jsonString =
-                        """{
-  "title": "WikiSpec Story",
+                        """
+{
+  "title": "Create New Page Test",
   "story": [
     {
       "type": "factory",
-      "id": "d1493b7d30cfab68"
+      "id": "eacbfcc1e964204d"
     }
   ],
   "journal": [
     {
       "type": "create",
       "item": {
-        "title": "WikiSpec Story",
+        "title": "Create New Page Test",
         "story": []
       },
-      "date": 1686168396028
+      "date": 1693518954747
     },
     {
       "item": {
         "type": "factory",
-        "id": "d1493b7d30cfab68"
+        "id": "eacbfcc1e964204d"
       },
-      "id": "d1493b7d30cfab68",
+      "id": "eacbfcc1e964204d",
       "type": "add",
-      "date": 1686168405017
+      "date": 1693519254045
     }
   ]
-}"""
+}
+"""
 
                     expectedPage : Page
                     expectedPage =
                         Page
                             -- TITLE
-                            "WikiSpec Story"
+                            "Create New Page Test"
                             -- STORY
-                            [ AddFactory
+                            [ Factory
                                 { type_ = "factory"
-                                , id = "d1493b7d30cfab68"
+                                , id = "eacbfcc1e964204d"
                                 }
                             ]
                             -- JOURNAL
                             [ Create
                                 { type_ = "create"
-                                , item = { title = "WikiSpec Story", story = EmptyStory }
-                                , date = 1686168396028
+                                , item = { title = "Create New Page Test", story = EmptyContainer }
+                                , date = 1693518954747
                                 }
                             , Add
-                                { item = { type_ = "factory", id = "d1493b7d30cfab68" }
-                                , id = "d1493b7d30cfab68"
+                                { item = { type_ = "factory", id = "eacbfcc1e964204d" }
+                                , id = "eacbfcc1e964204d"
                                 , type_ = "add"
-                                , date = 1686168405017
+                                , date = 1693519254045
+                                }
+                            ]
+                in
+                Expect.equal (Decode.decodeString pageDecoder jsonString) (Ok expectedPage)
+        , Test.test "Add Paragraph (decoder)" <|
+            \() ->
+                let
+                    jsonString : String
+                    jsonString =
+                        """
+{
+  "title": "Create New Page Test",
+  "story": [
+    {
+      "type": "paragraph",
+      "id": "eacbfcc1e964204d",
+      "text": "double-clicked to edit and entered this text."
+    }
+  ],
+  "journal": [
+    {
+      "type": "create",
+      "item": {
+        "title": "Create New Page Test",
+        "story": []
+      },
+      "date": 1693518954747
+    },
+    {
+      "item": {
+        "type": "factory",
+        "id": "eacbfcc1e964204d"
+      },
+      "id": "eacbfcc1e964204d",
+      "type": "add",
+      "date": 1693519254045
+    },
+    {
+      "type": "edit",
+      "id": "eacbfcc1e964204d",
+      "item": {
+        "type": "paragraph",
+        "id": "eacbfcc1e964204d",
+        "text": "double-clicked to edit and entered this text."
+      },
+      "date": 1693520732730
+    }
+  ]
+}
+"""
+
+                    expectedPage : Page
+                    expectedPage =
+                        Page
+                            -- TITLE
+                            "Create New Page Test"
+                            -- STORY
+                            [ Paragraph
+                                { type_ = "paragraph"
+                                , id = "eacbfcc1e964204d"
+                                , text = "double-clicked to edit and entered this text."
+                                }
+                            ]
+                            -- JOURNAL
+                            [ Create
+                                { type_ = "create"
+                                , item = { title = "Create New Page Test", story = EmptyContainer }
+                                , date = 1693518954747
+                                }
+                            , Add
+                                { item = { type_ = "factory", id = "eacbfcc1e964204d" }
+                                , id = "eacbfcc1e964204d"
+                                , type_ = "add"
+                                , date = 1693519254045
+                                }
+                            , Edit
+                                { type_ = "edit"
+                                , id = "eacbfcc1e964204d"
+                                , item = { type_ = "paragraph", id = "eacbfcc1e964204d", text = "double-clicked to edit and entered this text." }
+                                , date = 1693520732730
                                 }
                             ]
                 in
@@ -198,7 +280,7 @@ encoder =
                             -- JOURNAL
                             [ Create
                                 { type_ = "create"
-                                , item = { title = "Create New Page Test", story = EmptyStory }
+                                , item = { title = "Create New Page Test", story = EmptyContainer }
                                 , date = 1686247427400
                                 }
                             ]
@@ -243,7 +325,7 @@ encoder =
                             -- JOURNAL
                             [ Create
                                 { type_ = "create"
-                                , item = { title = "Create New Page Test", story = EmptyStory }
+                                , item = { title = "Create New Page Test", story = EmptyContainer }
                                 , date = 1686247427400
                                 }
                             , Add

@@ -1,13 +1,79 @@
-module Wiki exposing (AddEvent, CreateEvent, EditEvent, Event(..), FactoryItemAlias, FutureAlias, Page, ParagraphItemAlias, Story(..), StoryItemAlias, StorySnippetAlias, pageDecoder, pageEncoder)
+module Wiki exposing (Event(..), Page, Story(..), pageDecoder, pageEncoder, renderStory)
 
+import Html exposing (Html, text)
+import Html.Attributes
 import Json.Decode as Decode
 import Json.Encode as Encode
+import Parser exposing (..)
+import Parser.Advanced exposing (inContext)
+
+
+type alias WikiLink =
+    { title : String
+    }
+
+
+link : Parser WikiLink
+link =
+    {- Links are enclosed in doubled square brackets
+       Ref: Wikilinks (internal links) https://en.wikipedia.org/wiki/Help:Link
+       and http://ward.bay.wiki.org/view/internal-link
+    -}
+    succeed WikiLink
+        |. symbol "[["
+        |= (getChompedString <| chompWhile (\c -> c /= ']'))
+        |. symbol "]]"
+
+
+parseWikiLink : String -> Result (List Parser.DeadEnd) WikiLink
+parseWikiLink str =
+    Parser.run link str
+
+
+lookAhead : Parser a -> Parser ()
+lookAhead parser =
+    {- How to build interesting parsers
+       Ref: https://discourse.elm-lang.org/t/how-to-build-interesting-parsers/8786
+
+       Demystifying an Obscure LookAhead Parser
+       Ref: https://discourse.elm-lang.org/t/demystifying-an-obscure-lookahead-parser/9295
+    -}
+    Parser.oneOf
+        [ Parser.oneOf
+            [ parser
+                |> Parser.backtrackable
+                |> Parser.andThen (\_ -> Parser.commit ())
+                |> Parser.andThen (\_ -> Parser.problem "")
+            , Parser.succeed
+                (parser
+                    |> Parser.backtrackable
+                    |> Parser.map (\_ -> ())
+                )
+            ]
+            |> Parser.backtrackable
+        , Parser.succeed (Parser.succeed ())
+        ]
+        |> Parser.andThen identity
+
+
+renderWikiLink : String -> Html msg
+renderWikiLink title =
+    let
+        target =
+            -- title asSlug
+            title |> String.toLower |> String.replace " " "-" |> (\s -> "/" ++ s)
+    in
+    Html.a [ Html.Attributes.href target ] [ text title ]
+
+
+
+-- The "page"
 
 
 type alias Page =
     { title : String
     , story : List Story
-    , journal : List Event
+    , journal : List Event -- items are called Actions
     }
 
 
@@ -32,107 +98,78 @@ pageEncoder page =
 -- The "story" is a collection of paragraphs and paragraph-like items.
 
 
-type alias StoryItemAlias =
-    { title : String
-    , story : Story
-    }
-
-
-type alias ParagraphItemAlias =
-    { type_ : String, id : String, text : String }
-
-
-paragraphItemEncoder : ParagraphItemAlias -> Encode.Value
-paragraphItemEncoder item =
-    Encode.object
-        [ ( "type", Encode.string "paragraph" )
-        , ( "id", Encode.string item.id )
-        , ( "text", Encode.string item.text )
-        ]
-
-
-type alias FactoryItemAlias =
-    { type_ : String, id : String }
-
-
-factoryItemDecoder : Decode.Decoder FactoryItemAlias
-factoryItemDecoder =
-    Decode.map2 FactoryItemAlias
-        (Decode.field "type" Decode.string)
-        (Decode.field "id" Decode.string)
-
-
-factoryItemEncoder : FactoryItemAlias -> Encode.Value
-factoryItemEncoder item =
-    -- "type": "factory"
-    Encode.object
-        [ ( "type", Encode.string "factory" )
-        , ( "id", Encode.string item.id )
-        ]
-
-
 type Story
-    = Future FutureAlias
-    | AddFactory FactoryItemAlias
-    | Snippet StorySnippetAlias
-    | Paragraph ParagraphItemAlias
-    | EmptyStory
+    = Future FutureStoryItemAlias
+    | Factory FactoryStoryItemAlias
+    | Paragraph ParagraphStoryItemAlias
+    | EmptyContainer -- basic fact
 
 
-type alias FutureAlias =
-    { id : String, type_ : String, text : String, title : String }
+renderStory : Story -> Html msg
+renderStory story =
+    case story of
+        Paragraph paragraph ->
+            case paragraph.type_ of
+                "paragraph" ->
+                    let
+                        renderedText =
+                            paragraph.text
+                                |> parseWikiLink
 
+                        -- |> renderWikiLink
+                    in
+                    Html.p []
+                        [ Html.text
+                            (Debug.toString renderedText)
+                        ]
 
-futureEventDecoder : Decode.Decoder FutureAlias
-futureEventDecoder =
-    Decode.map4 FutureAlias
-        (Decode.field "id" Decode.string)
-        (Decode.field "type" Decode.string)
-        (Decode.field "text" Decode.string)
-        (Decode.field "title" Decode.string)
+                _ ->
+                    Html.text ("⚠️ INFO Paragraph – Unknown story item type: " ++ paragraph.type_)
 
+        {- A Future item describes how a missing page can be found or created.
+           Unresolved internal links add a ghost page with a future to the lineup.
+           Ref: http://glossary.asia.wiki.org/view/welcome-visitors/view/future
+        -}
+        Future future ->
+            case future.type_ of
+                "future" ->
+                    Html.div [] [ Html.text ("⚠️ INFO Future – Known story item type: " ++ future.type_) ]
 
-type alias StorySnippetAlias =
-    { type_ : String
-    , id : String
-    , text : String
-    }
+                _ ->
+                    Html.div [] [ Html.text ("⚠️ INFO Future – Unknown story item type: " ++ future.type_) ]
 
+        Factory _ ->
+            Html.text "⚠️ INFO – Factory"
 
-storySnippetDecoder : Decode.Decoder StorySnippetAlias
-storySnippetDecoder =
-    Decode.map3 StorySnippetAlias
-        (Decode.field "type" Decode.string)
-        (Decode.field "id" Decode.string)
-        (Decode.field "text" Decode.string)
+        EmptyContainer ->
+            Html.text "⚠️ INFO – Empty Story"
 
 
 storyDecoder : Decode.Decoder Story
 storyDecoder =
     Decode.oneOf
-        [ Decode.map Future futureEventDecoder
-        , Decode.map Snippet storySnippetDecoder
-        , Decode.map AddFactory factoryItemDecoder
-        , Decode.map (\_ -> EmptyStory) (Decode.succeed EmptyStory)
+        [ Decode.map Future futureDecoder
+        , Decode.map Paragraph paragraphDecoder
+        , Decode.map Factory factoryDecoder
+        , Decode.map (\_ -> EmptyContainer) (Decode.succeed EmptyContainer)
         ]
 
 
 storyEncoder : Story -> Encode.Value
 storyEncoder story =
     case story of
-        Snippet alias ->
-            Encode.object
-                [ ( "type", Encode.string alias.type_ )
-                , ( "id", Encode.string alias.id )
-                , ( "text", Encode.string alias.text )
-                ]
-
         Future alias ->
             Encode.object
                 [ ( "id", Encode.string alias.id )
                 , ( "type", Encode.string alias.type_ )
                 , ( "text", Encode.string alias.text )
                 , ( "title", Encode.string alias.title )
+                ]
+
+        Factory alias ->
+            Encode.object
+                [ ( "type", Encode.string alias.type_ )
+                , ( "id", Encode.string alias.id )
                 ]
 
         Paragraph alias ->
@@ -143,11 +180,14 @@ storyEncoder story =
                 ]
 
         -- Add encoders for other story variants as needed
-        EmptyStory ->
+        EmptyContainer ->
             Encode.list identity []
 
-        _ ->
-            Encode.null
+
+type alias StoryItemAlias =
+    { title : String
+    , story : Story
+    }
 
 
 storyItemDecoder : Decode.Decoder StoryItemAlias
@@ -165,57 +205,140 @@ storyItemEncoder item =
         ]
 
 
+type alias ParagraphStoryItemAlias =
+    { type_ : String, id : String, text : String }
 
+
+paragraphDecoder : Decode.Decoder ParagraphStoryItemAlias
+paragraphDecoder =
+    Decode.map3 ParagraphStoryItemAlias
+        (Decode.field "type" Decode.string)
+        (Decode.field "id" Decode.string)
+        (Decode.field "text" Decode.string)
+
+
+paragraphEncoder : ParagraphStoryItemAlias -> Encode.Value
+paragraphEncoder item =
+    -- "type": "paragraph"
+    Encode.object
+        [ ( "type", Encode.string "paragraph" )
+        , ( "id", Encode.string item.id )
+        , ( "text", Encode.string item.text )
+        ]
+
+
+type alias FactoryStoryItemAlias =
+    { type_ : String, id : String }
+
+
+factoryDecoder : Decode.Decoder FactoryStoryItemAlias
+factoryDecoder =
+    Decode.map2 FactoryStoryItemAlias
+        (Decode.field "type" Decode.string)
+        (Decode.field "id" Decode.string)
+
+
+factoryEncoder : FactoryStoryItemAlias -> Encode.Value
+factoryEncoder item =
+    -- "type": "factory"
+    Encode.object
+        [ ( "type", Encode.string "factory" )
+        , ( "id", Encode.string item.id )
+        ]
+
+
+type alias FutureStoryItemAlias =
+    { id : String, type_ : String, text : String, title : String }
+
+
+futureDecoder : Decode.Decoder FutureStoryItemAlias
+futureDecoder =
+    Decode.map4 FutureStoryItemAlias
+        (Decode.field "id" Decode.string)
+        (Decode.field "type" Decode.string)
+        (Decode.field "text" Decode.string)
+        (Decode.field "title" Decode.string)
+
+
+
+-- futureEncoder ?
 -- The "journal" collects story edits.
 
 
 type Event
     = Create CreateEvent
-    | Add AddEvent
+    | Add AddFactoryEvent
     | Edit EditEvent
-    | Unknown Decode.Value
+    | Fork ForkEvent
 
 
 eventDecoder : Decode.Decoder Event
 eventDecoder =
     Decode.oneOf
-        [ Decode.map Create createEventDecoder
-        , Decode.map Add addEventDecoder
+        [ Decode.map Create createDecoder
+        , Decode.map Edit editDecoder
+        , Decode.map Add addDecoder
+        , Decode.map Fork forkDecoder
 
-        -- , Decode.map Edit editEventDecoder
-        -- Add decoders for other journal event variants as needed
-        , Decode.map Unknown Decode.value
+        -- Add other journal event variants as needed
+        -- remove
+        -- move
+        -- fork
+        -- reference
+        -- roster
+        {- Note: Reference and roster are not events (or action items) but story item types.
+           Roster is a story item type in the paragraph branch.
+           Reference is one type in the future branch.
+           This error in association – eventDecoder instead of correct storyDecoder – indicates
+           the intimate relationship between these two decoders.
+           Ref: https://wiki.ralfbarkow.ch/view/2023-09-15/view/oneof
+        -}
         ]
 
 
 type alias CreateEvent =
-    --"type": "create"
+    -- "type": "create"
     { type_ : String, item : StoryItemAlias, date : Int }
 
 
-createEventDecoder : Decode.Decoder CreateEvent
-createEventDecoder =
+createDecoder : Decode.Decoder CreateEvent
+createDecoder =
     Decode.map3 CreateEvent
         (Decode.field "type" Decode.string)
         (Decode.field "item" storyItemDecoder)
         (Decode.field "date" Decode.int)
 
 
-type alias AddEvent =
-    { item : FactoryItemAlias, id : String, type_ : String, date : Int }
+type alias AddFactoryEvent =
+    -- "type": "add"
+    { item : AddFactoryEventItemAlias, id : String, type_ : String, date : Int }
 
 
-addEventDecoder : Decode.Decoder AddEvent
-addEventDecoder =
-    Decode.map4 AddEvent
-        (Decode.field "item" factoryItemDecoder)
+type alias AddFactoryEventItemAlias =
+    { type_ : String, id : String }
+
+
+addDecoder : Decode.Decoder AddFactoryEvent
+addDecoder =
+    Decode.map4 AddFactoryEvent
+        (Decode.field "item" factoryDecoder)
         (Decode.field "id" Decode.string)
         (Decode.field "type" Decode.string)
         (Decode.field "date" Decode.int)
 
 
 type alias EditEvent =
-    { type_ : String, id : String, item : ParagraphItemAlias, date : Int }
+    -- "type": "edit"
+    { type_ : String, id : String, item : ParagraphStoryItemAlias, date : Int }
+
+
+editDecoder : Decode.Decoder EditEvent
+editDecoder =
+    Decode.map4 EditEvent
+        (Decode.field "type" Decode.string)
+        (Decode.field "id" Decode.string)
+        (Decode.field "item" paragraphDecoder)
+        (Decode.field "date" Decode.int)
 
 
 journalEncoder : Event -> Encode.Value
@@ -233,32 +356,49 @@ journalEncoder event =
                 , ( "date", Encode.int createEvent.date )
                 ]
 
-        Add addEvent ->
+        Add addFactoryEvent ->
             let
-                eventItem : FactoryItemAlias
+                eventItem : AddFactoryEventItemAlias
                 eventItem =
-                    addEvent.item
+                    addFactoryEvent.item
             in
             Encode.object
-                [ ( "item", factoryItemEncoder eventItem )
-                , ( "id", Encode.string addEvent.id )
+                [ ( "item", factoryEncoder eventItem )
+                , ( "id", Encode.string addFactoryEvent.id )
                 , ( "type", Encode.string "add" )
-                , ( "date", Encode.int addEvent.date )
+                , ( "date", Encode.int addFactoryEvent.date )
                 ]
 
         Edit editEvent ->
             let
-                eventItem : ParagraphItemAlias
+                eventItem : ParagraphStoryItemAlias
                 eventItem =
                     editEvent.item
             in
             Encode.object
                 [ ( "type", Encode.string "edit" )
                 , ( "id", Encode.string editEvent.id )
-                , ( "item", paragraphItemEncoder eventItem )
+                , ( "item", paragraphEncoder eventItem )
                 , ( "date", Encode.int editEvent.date )
                 ]
 
-        -- Add encoders for other journal event variants as needed
-        Unknown _ ->
-            Encode.null
+        Fork forkEvent ->
+            Encode.object
+                [ ( "type", Encode.string "fork" )
+                , ( "date", Encode.int forkEvent.date )
+                ]
+
+
+
+-- Add encoders for other journal event variants as needed
+
+
+type alias ForkEvent =
+    -- "type": "for"
+    { date : Int }
+
+
+forkDecoder : Decode.Decoder ForkEvent
+forkDecoder =
+    Decode.map ForkEvent
+        (Decode.field "date" Decode.int)

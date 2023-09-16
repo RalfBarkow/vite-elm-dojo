@@ -17,8 +17,8 @@ whitespace =
     chompWhile (\c -> c == ' ')
 
 
-wikiLinkParser : Parser WikiLink
-wikiLinkParser =
+link : Parser WikiLink
+link =
     succeed WikiLink
         |. symbol "[["
         |= (getChompedString <| chompWhile (\c -> c /= ']'))
@@ -27,7 +27,7 @@ wikiLinkParser =
 
 parseWikiLink : String -> Result (List Parser.DeadEnd) WikiLink
 parseWikiLink str =
-    Parser.run wikiLinkParser str
+    Parser.run link str
 
 
 type alias Model =
