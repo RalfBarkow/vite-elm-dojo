@@ -4,7 +4,6 @@ module WikiSpec exposing (decoder, encoder)
 -- https://wiki.ralfbarkow.ch/view/wikispec-encoders/view/wikispec-encoders_rev204
 
 import Expect
-import FatalError
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Test exposing (Test)
