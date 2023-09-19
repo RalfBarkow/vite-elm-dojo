@@ -1,118 +1,99 @@
-module Main exposing (Model, Msg, ParsedJson, init, main, update, view)
+module Main exposing (addHex, codeToChar, isUninteresting, main, string, stringHelp, unicode)
 
 import Browser
-import Html exposing (Html, button, div, h3, pre, text, textarea)
-import Html.Attributes exposing (cols, placeholder, rows)
-import Html.Events exposing (onClick, onInput)
-import Json.Decode as Decode
-import Json.Encode as Encode
-import String exposing (trim)
-import Wiki
+import Char
+import Html
+import Parser exposing (..)
 
 
-type alias Model =
-    { input : String
-    , parsedJson : ParsedJson
-    , output : String
-    }
+
+-- MAIN
 
 
-type ParsedJson
-    = NotParsed
-    | Parsed Wiki.Page
+main =
+    Html.text <|
+        Debug.toString <|
+            run string "\"hello\""
 
 
-init : () -> ( Model, Cmd Msg )
-init _ =
-    let
-        rawData : String.String
-        rawData =
-            """
-{
-  "title": "2023-06-12",
-  "story": [],
-  "journal": [
-    {
-      "type": "create",
-      "item": {
-        "title": "2023-06-12",
-        "story": []
-      },
-      "date": 1686550113460
-    }
-  ]
-}
-            """
-    in
-    ( { input = rawData, parsedJson = NotParsed, output = "" }, Cmd.none )
+
+-- STRINGS
 
 
-type Msg
-    = UpdateInput String
-    | ParseJson
+string : Parser String
+string =
+    succeed identity
+        |. token "\""
+        |= loop [] stringHelp
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-    case msg of
-        UpdateInput value ->
-            ( { model | input = value }, Cmd.none )
-
-        ParseJson ->
-            let
-                json : String.String
-                json =
-                    trim model.input
-            in
-            case Decode.decodeString Wiki.pageDecoder json of
-                Ok value ->
-                    ( { model
-                        | parsedJson = Parsed value
-                        , output = Wiki.pageEncoder value |> Encode.encode 0
-                      }
-                    , Cmd.none
-                    )
-
-                Err _ ->
-                    ( { model | parsedJson = NotParsed, output = "" }, Cmd.none )
-
-
-view : Model -> Html Msg
-view model =
-    div []
-        [ div []
-            -- UpdateInput
-            [ textarea [ placeholder "Enter JSON here", rows 10, cols 80, onInput UpdateInput ] [ text model.input ]
-            ]
-        , div []
-            -- ParseJson button
-            [ button [ onClick ParseJson ] [ text "Parse JSON" ]
-            ]
-        , div []
-            -- ParseJson feedback
-            [ case model.parsedJson of
-                NotParsed ->
-                    text "JSON not parsed. Please enter your data and click 'Parse JSON'."
-
-                Parsed page ->
-                    div []
-                        [ h3 [] [ text "Parsed JSON" ]
-                        , pre [] [ text (Debug.toString page) ]
-                        ]
-            ]
-        , div []
-            -- Output
-            [ h3 [] [ text "Output" ]
-            , pre [] [ text model.output ]
-            ]
+stringHelp : List String -> Parser (Step (List String) String)
+stringHelp revChunks =
+    oneOf
+        [ succeed (\chunk -> Loop (chunk :: revChunks))
+            |. token "\\"
+            |= oneOf
+                [ map (\_ -> "\n") (token "n")
+                , map (\_ -> "\t") (token "t")
+                , map (\_ -> "\u{000D}") (token "r")
+                , succeed String.fromChar
+                    |. token "u{"
+                    |= unicode
+                    |. token "}"
+                ]
+        , token "\""
+            |> map (\_ -> Done (String.join "" (List.reverse revChunks)))
+        , chompWhile isUninteresting
+            |> getChompedString
+            |> map (\chunk -> Loop (chunk :: revChunks))
         ]
 
 
-main : Program () Model Msg
-main =
-    Browser.element
-        { init = init
-        , view = view
-        , update = update
-        , subscriptions = \_ -> Sub.none
-        }
+isUninteresting : Char -> Bool
+isUninteresting char =
+    char /= '\\' && char /= '"'
+
+
+
+-- UNICODE
+
+
+unicode : Parser Char
+unicode =
+    getChompedString (chompWhile Char.isHexDigit)
+        |> andThen codeToChar
+
+
+codeToChar : String -> Parser Char
+codeToChar str =
+    let
+        length =
+            String.length str
+
+        code =
+            String.foldl addHex 0 str
+    in
+    if 4 <= length && length <= 6 then
+        problem "code point must have between 4 and 6 digits"
+
+    else if 0 <= code && code <= 0x0010FFFF then
+        succeed (Char.fromCode code)
+
+    else
+        problem "code point must be between 0 and 0x10FFFF"
+
+
+addHex : Char -> Int -> Int
+addHex char total =
+    let
+        code =
+            Char.toCode char
+    in
+    if 0x30 <= code && code <= 0x39 then
+        16 * total + (code - 0x30)
+
+    else if 0x41 <= code && code <= 0x46 then
+        16 * total + (10 + code - 0x41)
+
+    else
+        16 * total + (10 + code - 0x61)
