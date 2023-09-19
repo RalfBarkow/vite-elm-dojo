@@ -1,4 +1,4 @@
-module Wiki exposing (Event(..), Page, Story(..), pageDecoder, pageEncoder, renderStory)
+module Wiki exposing (Journal(..), Page, Story(..), pageDecoder, pageEncoder, renderStory)
 
 import Html exposing (Html, text)
 import Html.Attributes
@@ -8,64 +8,6 @@ import Parser exposing (..)
 import Parser.Advanced exposing (inContext)
 
 
-type alias WikiLink =
-    { title : String
-    }
-
-
-link : Parser WikiLink
-link =
-    {- Links are enclosed in doubled square brackets
-       Ref: Wikilinks (internal links) https://en.wikipedia.org/wiki/Help:Link
-       and http://ward.bay.wiki.org/view/internal-link
-    -}
-    succeed WikiLink
-        |. symbol "[["
-        |= (getChompedString <| chompWhile (\c -> c /= ']'))
-        |. symbol "]]"
-
-
-parseWikiLink : String -> Result (List Parser.DeadEnd) WikiLink
-parseWikiLink str =
-    Parser.run link str
-
-
-lookAhead : Parser a -> Parser ()
-lookAhead parser =
-    {- How to build interesting parsers
-       Ref: https://discourse.elm-lang.org/t/how-to-build-interesting-parsers/8786
-
-       Demystifying an Obscure LookAhead Parser
-       Ref: https://discourse.elm-lang.org/t/demystifying-an-obscure-lookahead-parser/9295
-    -}
-    Parser.oneOf
-        [ Parser.oneOf
-            [ parser
-                |> Parser.backtrackable
-                |> Parser.andThen (\_ -> Parser.commit ())
-                |> Parser.andThen (\_ -> Parser.problem "")
-            , Parser.succeed
-                (parser
-                    |> Parser.backtrackable
-                    |> Parser.map (\_ -> ())
-                )
-            ]
-            |> Parser.backtrackable
-        , Parser.succeed (Parser.succeed ())
-        ]
-        |> Parser.andThen identity
-
-
-renderWikiLink : String -> Html msg
-renderWikiLink title =
-    let
-        target =
-            -- title asSlug
-            title |> String.toLower |> String.replace " " "-" |> (\s -> "/" ++ s)
-    in
-    Html.a [ Html.Attributes.href target ] [ text title ]
-
-
 
 -- The "page"
 
@@ -73,7 +15,17 @@ renderWikiLink title =
 type alias Page =
     { title : String
     , story : List Story
-    , journal : List Event -- items are called Actions
+
+    {- A Wiki Page has a journal that
+       records the history of
+       how the page was made and
+       where it has traveled.
+       Ref: http://glossary.asia.wiki.org/view/journal
+
+       Note: Instead of Action we use the concept of Event.
+       Ref: https://wiki.ralfbarkow.ch/view/event-ereignis
+    -}
+    , journal : List Journal
     }
 
 
@@ -82,7 +34,7 @@ pageDecoder =
     Decode.map3 Page
         (Decode.field "title" Decode.string)
         (Decode.field "story" (Decode.list storyDecoder))
-        (Decode.field "journal" (Decode.list eventDecoder))
+        (Decode.field "journal" (Decode.list journalDecoder))
 
 
 pageEncoder : Page -> Encode.Value
@@ -114,7 +66,7 @@ renderStory story =
                     let
                         renderedText =
                             paragraph.text
-                                |> parseWikiLink
+                                |> parse
 
                         -- |> renderWikiLink
                     in
@@ -265,15 +217,24 @@ futureDecoder =
 -- The "journal" collects story edits.
 
 
-type Event
+type Journal
     = Create CreateEvent
     | Add AddFactoryEvent
     | Edit EditEvent
     | Fork ForkEvent
 
 
-eventDecoder : Decode.Decoder Event
-eventDecoder =
+collect =
+    {- gathers together framed-content that has in common the same frame-type
+
+       See Frames
+       Ref: https://wiki.ralfbarkow.ch/view/frames
+    -}
+    Debug.todo
+
+
+journalDecoder : Decode.Decoder Journal
+journalDecoder =
     Decode.oneOf
         [ Decode.map Create createDecoder
         , Decode.map Edit editDecoder
@@ -341,7 +302,15 @@ editDecoder =
         (Decode.field "date" Decode.int)
 
 
-journalEncoder : Event -> Encode.Value
+
+{- encode the history of how the page was made and where it has traveled
+
+   Note: Instead of Action we use the concept of Event.
+   Ref: https://wiki.ralfbarkow.ch/view/event-ereignis
+-}
+
+
+journalEncoder : Journal -> Encode.Value
 journalEncoder event =
     case event of
         Create createEvent ->
@@ -402,3 +371,80 @@ forkDecoder : Decode.Decoder ForkEvent
 forkDecoder =
     Decode.map ForkEvent
         (Decode.field "date" Decode.int)
+
+
+
+-- Parser-Renderer
+
+
+type alias WikiLink =
+    { title : String
+    }
+
+
+link : Parser String
+link =
+    {- Links are enclosed in doubled square brackets
+
+       Ref: Wikilinks (internal links) https://en.wikipedia.org/wiki/Help:Link
+       and http://ward.bay.wiki.org/view/internal-link
+    -}
+    succeed identity
+        |. symbol "[["
+        |= (getChompedString <| chompWhile (\c -> c /= ']'))
+        |. symbol "]]"
+
+
+char : Parser String
+char =
+    chompUntilEndOr "\n"
+        |> Parser.getChompedString
+
+
+paragraphText : Parser String
+paragraphText =
+    Parser.oneOf
+        [ link
+        , char
+        ]
+
+
+parse : String -> Result (List DeadEnd) String
+parse str =
+    Parser.run paragraphText str
+
+
+lookAhead : Parser a -> Parser ()
+lookAhead parser =
+    {- How to build interesting parsers
+       Ref: https://discourse.elm-lang.org/t/how-to-build-interesting-parsers/8786
+
+       Demystifying an Obscure LookAhead Parser
+       Ref: https://discourse.elm-lang.org/t/demystifying-an-obscure-lookahead-parser/9295
+    -}
+    Parser.oneOf
+        [ Parser.oneOf
+            [ parser
+                |> Parser.backtrackable
+                |> Parser.andThen (\_ -> Parser.commit ())
+                |> Parser.andThen (\_ -> Parser.problem "")
+            , Parser.succeed
+                (parser
+                    |> Parser.backtrackable
+                    |> Parser.map (\_ -> ())
+                )
+            ]
+            |> Parser.backtrackable
+        , Parser.succeed (Parser.succeed ())
+        ]
+        |> Parser.andThen identity
+
+
+renderWikiLink : String -> Html msg
+renderWikiLink title =
+    let
+        target =
+            -- title asSlug
+            title |> String.toLower |> String.replace " " "-" |> (\s -> "/" ++ s)
+    in
+    Html.a [ Html.Attributes.href target ] [ text title ]
