@@ -109,7 +109,7 @@ tokenize input =
                     else
                         VariableToken token
         )
-        (String.split " " input)
+        [ input ]
 
 
 parseExpression : List Token -> Expression
