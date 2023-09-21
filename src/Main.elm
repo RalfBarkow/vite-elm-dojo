@@ -4,6 +4,26 @@ import Browser
 import Html exposing (..)
 import Html.Attributes exposing (placeholder, value)
 import Html.Events exposing (onInput)
+import Parser
+    exposing
+        ( (|.)
+        , (|=)
+        , DeadEnd
+        , Parser
+        , andThen
+        , chompUntil
+        , chompUntilEndOr
+        , chompWhile
+        , deadEndsToString
+        , getChompedString
+        , oneOf
+        , problem
+        , run
+        , succeed
+        , symbol
+        , token
+        )
+import Parser.Extras exposing (between, brackets)
 
 
 
@@ -46,9 +66,20 @@ update msg model =
         ParseInput input ->
             let
                 result =
-                    input
+                    Debug.toString (parse input)
             in
             { model | input = input, output = result }
+
+
+char : Parser String
+char =
+    chompUntilEndOr "\n"
+        |> Parser.getChompedString
+
+
+parse : String -> Result (List DeadEnd) String
+parse str =
+    Parser.run char str
 
 
 
