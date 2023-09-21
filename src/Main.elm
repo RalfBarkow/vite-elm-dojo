@@ -1,118 +1,139 @@
-module Main exposing (Model, Msg, ParsedJson, init, main, update, view)
+module Main exposing (..)
 
-import Browser
-import Html exposing (Html, button, div, h3, pre, text, textarea)
-import Html.Attributes exposing (cols, placeholder, rows)
-import Html.Events exposing (onClick, onInput)
-import Json.Decode as Decode
-import Json.Encode as Encode
-import String exposing (trim)
-import Wiki
+import Browser  
+import Html exposing (..)
+import Html.Events exposing (onInput)
+import Html.Attributes exposing (placeholder, value)
 
+-- MAIN
+main : Program () Model Msg
+main =
+  Browser.sandbox { init = init, update = update, view = view }
+
+-- MODEL
 
 type alias Model =
     { input : String
-    , parsedJson : ParsedJson
     , output : String
     }
 
-
-type ParsedJson
-    = NotParsed
-    | Parsed Wiki.Page
-
-
-init : () -> ( Model, Cmd Msg )
-init _ =
-    let
-        rawData : String.String
-        rawData =
-            """
-{
-  "title": "2023-06-12",
-  "story": [],
-  "journal": [
-    {
-      "type": "create",
-      "item": {
-        "title": "2023-06-12",
-        "story": []
-      },
-      "date": 1686550113460
+init : Model
+init =
+    { input = ""
+    , output = ""
     }
-  ]
-}
-            """
-    in
-    ( { input = rawData, parsedJson = NotParsed, output = "" }, Cmd.none )
 
+-- UPDATE
 
 type Msg
-    = UpdateInput String
-    | ParseJson
+    = ParseInput String
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
+
+update : Msg -> Model -> Model
 update msg model =
     case msg of
-        UpdateInput value ->
-            ( { model | input = value }, Cmd.none )
-
-        ParseJson ->
+        ParseInput input ->
             let
-                json : String.String
-                json =
-                    trim model.input
+                tokens = tokenize input
+                expression = parseExpression tokens
+                result = showExpression expression
             in
-            case Decode.decodeString Wiki.pageDecoder json of
-                Ok value ->
-                    ( { model
-                        | parsedJson = Parsed value
-                        , output = Wiki.pageEncoder value |> Encode.encode 0
-                      }
-                    , Cmd.none
-                    )
+            { model | input = input, output = result }
 
-                Err _ ->
-                    ( { model | parsedJson = NotParsed, output = "" }, Cmd.none )
-
-
+-- VIEW
 view : Model -> Html Msg
 view model =
     div []
-        [ div []
-            -- UpdateInput
-            [ textarea [ placeholder "Enter JSON here", rows 10, cols 80, onInput UpdateInput ] [ text model.input ]
-            ]
-        , div []
-            -- ParseJson button
-            [ button [ onClick ParseJson ] [ text "Parse JSON" ]
-            ]
-        , div []
-            -- ParseJson feedback
-            [ case model.parsedJson of
-                NotParsed ->
-                    text "JSON not parsed. Please enter your data and click 'Parse JSON'."
-
-                Parsed page ->
-                    div []
-                        [ h3 [] [ text "Parsed JSON" ]
-                        , pre [] [ text (Debug.toString page) ]
-                        ]
-            ]
-        , div []
-            -- Output
-            [ h3 [] [ text "Output" ]
-            , pre [] [ text model.output ]
-            ]
+        [ h2 [] [ text "Expression Parser" ]
+        , textarea [ onInput ParseInput, placeholder "Enter expression", value model.input ] []
+        , div [] [ text ("Result: " ++ model.output), div [ Html.Attributes.id "result" ] [] ]
         ]
 
 
-main : Program () Model Msg
-main =
-    Browser.element
-        { init = init
-        , view = view
-        , update = update
-        , subscriptions = \_ -> Sub.none
-        }
+
+type Expression
+    = Value Int
+    | Variable String
+    | Add Expression Expression
+    | Subtract Expression Expression
+    | Multiply Expression Expression
+    | Divide Expression Expression
+
+
+type Token
+    = ValueToken Int
+    | VariableToken String
+    | OperatorToken String
+
+
+tokenize : String -> List Token
+tokenize input =
+    List.map (\token -> 
+        case String.toInt token of
+            Just value -> ValueToken value
+            Nothing -> 
+                if String.contains "+" token then
+                    OperatorToken "+"
+                else if String.contains "-" token then
+                    OperatorToken "-"
+                else if String.contains "*" token then
+                    OperatorToken "*"
+                else if String.contains "/" token then
+                    OperatorToken "/"
+                else
+                    VariableToken token
+    ) (String.split " " input)
+
+parseExpression : List Token -> Expression
+parseExpression tokens =
+    let
+        (expression, _) = parseExpressionHelper tokens
+    in
+    expression
+
+parseExpressionHelper : List Token -> (Expression, List Token)
+parseExpressionHelper tokens =
+    case tokens of
+        [] -> (Value 0, [])
+        ValueToken value :: rest -> (Value value, rest)
+        VariableToken variable :: rest -> (Variable variable, rest)
+        OperatorToken "+" :: rest ->
+            let
+                (left, rest1) = parseExpressionHelper rest
+                (right, rest2) = parseExpressionHelper rest1
+            in
+            (Add left right, rest2)
+        OperatorToken "-" :: rest ->
+            let
+                (left, rest1) = parseExpressionHelper rest
+                (right, rest2) = parseExpressionHelper rest1
+            in
+            (Subtract left right, rest2)
+        OperatorToken "*" :: rest ->
+            let
+                (left, rest1) = parseExpressionHelper rest
+                (right, rest2) = parseExpressionHelper rest1
+            in
+            (Multiply left right, rest2)
+        OperatorToken "/" :: rest ->
+            let
+                (left, rest1) = parseExpressionHelper rest
+                (right, rest2) = parseExpressionHelper rest1
+            in
+            (Divide left right, rest2)
+        _ -> (Value 0, tokens)
+
+
+
+
+showExpression : Expression -> String
+showExpression expression =
+    case expression of
+        Value value -> String.fromInt value
+        Variable variable -> variable
+        Add left right -> "(" ++ showExpression left ++ " + " ++ showExpression right ++ ")"
+        Subtract left right -> "(" ++ showExpression left ++ " - " ++ showExpression right ++ ")"
+        Multiply left right -> "(" ++ showExpression left ++ " * " ++ showExpression right ++ ")"
+        Divide left right -> "(" ++ showExpression left ++ " / " ++ showExpression right ++ ")"
+
