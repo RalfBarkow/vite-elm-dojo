@@ -23,7 +23,32 @@ import Parser
         , symbol
         , token
         )
-import Parser.Extras exposing (between, brackets)
+import Parser.Extras exposing (brackets)
+
+
+
+-- PARSING TITLE BETWEEN DOUBLE SQUARE BRACKETS
+
+
+titleBetweenDoubleBrackets : Parser String
+titleBetweenDoubleBrackets =
+    brackets char
+
+
+parse : String -> Result String String
+parse input =
+    case Parser.run char input of
+        Ok result ->
+            Ok result
+
+        Err _ ->
+            Err "Invalid input"
+
+
+char : Parser String
+char =
+    chompUntilEndOr "\n"
+        |> Parser.getChompedString
 
 
 
@@ -41,14 +66,14 @@ main =
 
 type alias Model =
     { input : String
-    , output : String
+    , output : Result String String
     }
 
 
 init : Model
 init =
     { input = ""
-    , output = ""
+    , output = Err "No input yet"
     }
 
 
@@ -66,20 +91,9 @@ update msg model =
         ParseInput input ->
             let
                 result =
-                    Debug.toString (parse input)
+                    parse input
             in
             { model | input = input, output = result }
-
-
-char : Parser String
-char =
-    chompUntilEndOr "\n"
-        |> Parser.getChompedString
-
-
-parse : String -> Result (List DeadEnd) String
-parse str =
-    Parser.run char str
 
 
 
@@ -91,5 +105,13 @@ view model =
     div []
         [ h2 [] [ text "Echo" ]
         , textarea [ onInput ParseInput, placeholder "Enter text", value model.input ] []
-        , div [] [ text ("Result: " ++ model.output), div [ Html.Attributes.id "result" ] [] ]
+        , div []
+            [ text "Result: "
+            , case model.output of
+                Ok result ->
+                    text result
+
+                Err errMsg ->
+                    text errMsg
+            ]
         ]
