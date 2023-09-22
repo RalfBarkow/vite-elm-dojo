@@ -1,117 +1,81 @@
 module Main exposing (..)
 
-import Browser
-import Html exposing (..)
-import Html.Attributes exposing (placeholder, value)
-import Html.Events exposing (onInput)
-import Parser
-    exposing
-        ( (|.)
-        , (|=)
-        , DeadEnd
-        , Parser
-        , andThen
-        , chompUntil
-        , chompUntilEndOr
-        , chompWhile
-        , deadEndsToString
-        , getChompedString
-        , oneOf
-        , problem
-        , run
-        , succeed
-        , symbol
-        , token
-        )
-import Parser.Extras exposing (brackets)
+
+type RoundBracket
+    = Parenthesis
 
 
-
--- PARSING TITLE BETWEEN DOUBLE SQUARE BRACKETS
-
-
-titleBetweenDoubleBrackets : Parser String
-titleBetweenDoubleBrackets =
-    brackets char
+type alias State =
+    { stack : List RoundBracket
+    , isValid : Bool
+    }
 
 
-parse : String -> Result String String
-parse input =
-    case Parser.run char input of
-        Ok result ->
-            Ok result
-
-        Err _ ->
-            Err "Invalid input"
+push : RoundBracket -> State -> State
+push bracket state =
+    { state | stack = bracket :: state.stack }
 
 
-char : Parser String
-char =
-    chompUntilEndOr "\n"
-        |> Parser.getChompedString
+pop : State -> State
+pop state =
+    case state.stack of
+        [] ->
+            state
+
+        _ :: rest ->
+            { state | stack = rest }
 
 
+updateState : RoundBracket -> State -> State
+updateState bracket state =
+    case bracket of
+        Parenthesis ->
+            push Parenthesis state
 
--- MAIN
+
+isDyck : List RoundBracket -> Bool
+isDyck input =
+    let
+        initState =
+            { stack = []
+            , isValid = True
+            }
+    in
+    let
+        state =
+            List.foldr updateState initState input
+    in
+    List.isEmpty state.stack && state.isValid
 
 
-main : Program () Model Msg
+main : Cmd msg
 main =
-    Browser.sandbox { init = init, update = update, view = view }
+    let
+        test1 =
+            [ Parenthesis, Parenthesis, Parenthesis ]
 
+        -- Valid
+        test2 =
+            [ Parenthesis, Parenthesis ]
 
+        -- Valid
+        test3 =
+            [ Parenthesis ]
 
--- MODEL
+        -- Valid
+        test4 =
+            []
 
+        -- Valid
+        test5 =
+            [ Parenthesis, Parenthesis, Parenthesis, Parenthesis, Parenthesis ]
 
-type alias Model =
-    { input : String
-    , output : Result String String
-    }
+        -- Valid
+        test6 =
+            [ Parenthesis, Parenthesis, Parenthesis, Parenthesis ]
 
-
-init : Model
-init =
-    { input = ""
-    , output = Err "No input yet"
-    }
-
-
-
--- UPDATE
-
-
-type Msg
-    = ParseInput String
-
-
-update : Msg -> Model -> Model
-update msg model =
-    case msg of
-        ParseInput input ->
-            let
-                result =
-                    parse input
-            in
-            { model | input = input, output = result }
-
-
-
--- VIEW
-
-
-view : Model -> Html Msg
-view model =
-    div []
-        [ h2 [] [ text "Echo" ]
-        , textarea [ onInput ParseInput, placeholder "Enter text", value model.input ] []
-        , div []
-            [ text "Result: "
-            , case model.output of
-                Ok result ->
-                    text result
-
-                Err errMsg ->
-                    text errMsg
-            ]
-        ]
+        -- Invalid
+    in
+    [ test1, test2, test3, test4, test5, test6 ]
+        |> List.map (isDyck >> Debug.log "Test Result: ")
+        |> Debug.todo "Finished running tests"
