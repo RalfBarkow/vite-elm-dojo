@@ -64,17 +64,17 @@ view model =
         ]
 
 
-type RoundBracket
-    = Parenthesis
+type Parenthesis
+    = RoundBracket
 
 
 type alias State =
-    { stack : List RoundBracket
+    { stack : List Parenthesis
     , isValid : Bool
     }
 
 
-push : RoundBracket -> State -> State
+push : Parenthesis -> State -> State
 push bracket state =
     { state | stack = bracket :: state.stack }
 
@@ -89,14 +89,14 @@ pop state =
             { state | stack = rest }
 
 
-updateState : RoundBracket -> State -> State
+updateState : Parenthesis -> State -> State
 updateState bracket state =
     case bracket of
-        Parenthesis ->
-            push Parenthesis state
+        RoundBracket ->
+            push RoundBracket state
 
 
-isDyck : List RoundBracket -> Bool
+isDyck : List Parenthesis -> Bool
 isDyck input =
     let
         initState =
