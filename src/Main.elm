@@ -97,7 +97,12 @@ updateState bracket state =
             push OpenBracket state
 
         CloseBracket ->
-            push OpenBracket state
+            case state.stack of
+                [] ->
+                    { state | isValid = False }
+
+                _ :: rest ->
+                    pop state
 
 
 isDyck : List Parenthesis -> Bool
