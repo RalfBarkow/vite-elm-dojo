@@ -1,5 +1,68 @@
 module Main exposing (..)
 
+import Browser
+import Html exposing (..)
+import Html.Attributes exposing (placeholder, value)
+import Html.Events exposing (onInput)
+
+
+
+-- MAIN
+
+
+main : Program () Model Msg
+main =
+    Browser.sandbox { init = init, update = update, view = view }
+
+
+
+-- MODEL
+
+
+type alias Model =
+    { input : String
+    , output : String
+    }
+
+
+init : Model
+init =
+    { input = ""
+    , output = ""
+    }
+
+
+
+-- UPDATE
+
+
+type Msg
+    = ParseInput String
+
+
+update : Msg -> Model -> Model
+update msg model =
+    case msg of
+        ParseInput input ->
+            let
+                result =
+                    input
+            in
+            { model | input = input, output = result }
+
+
+
+-- VIEW
+
+
+view : Model -> Html Msg
+view model =
+    div []
+        [ h2 [] [ text "Dyck Tests" ]
+        , textarea [ onInput ParseInput, placeholder "Enter expression", value model.input ] []
+        , div [] [ text ("Result: " ++ model.output), div [ Html.Attributes.id "result" ] [] ]
+        ]
+
 
 type RoundBracket
     = Parenthesis
@@ -46,36 +109,3 @@ isDyck input =
             List.foldr updateState initState input
     in
     List.isEmpty state.stack && state.isValid
-
-
-main : Cmd msg
-main =
-    let
-        test1 =
-            [ Parenthesis, Parenthesis, Parenthesis ]
-
-        -- Valid
-        test2 =
-            [ Parenthesis, Parenthesis ]
-
-        -- Valid
-        test3 =
-            [ Parenthesis ]
-
-        -- Valid
-        test4 =
-            []
-
-        -- Valid
-        test5 =
-            [ Parenthesis, Parenthesis, Parenthesis, Parenthesis, Parenthesis ]
-
-        -- Valid
-        test6 =
-            [ Parenthesis, Parenthesis, Parenthesis, Parenthesis ]
-
-        -- Invalid
-    in
-    [ test1, test2, test3, test4, test5, test6 ]
-        |> List.map (isDyck >> Debug.log "Test Result: ")
-        |> Debug.todo "Finished running tests"
