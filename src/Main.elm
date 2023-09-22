@@ -68,6 +68,11 @@ type Parenthesis
     = RoundBracket
 
 
+type RoundBracket
+    = OpenBracket
+    | CloseBracket
+
+
 type alias State =
     { stack : List Parenthesis
     , isValid : Bool
