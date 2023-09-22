@@ -22,6 +22,7 @@ main =
 type alias Model =
     { input : String
     , output : String
+    , stack : List Parenthesis -- Add this line
     }
 
 
@@ -29,6 +30,7 @@ init : Model
 init =
     { input = ""
     , output = ""
+    , stack = [] -- Add this line
     }
 
 
@@ -47,11 +49,32 @@ update msg model =
             let
                 result =
                     input
+
+                stack =
+                    if isDyck (List.map charToParenthesis (String.toList input)) then
+                        List.map (\_ -> OpenBracket) (String.toList input)
+
+                    else
+                        []
             in
-            { model | input = input, output = result }
+            { model | input = input, output = result, stack = stack }
+
+
+charToParenthesis : Char -> Parenthesis
+charToParenthesis char =
+    case char of
+        '(' ->
+            OpenBracket
+
+        ')' ->
+            CloseBracket
+
+        _ ->
+            OpenBracket
 
 
 
+-- Handle other characters if needed
 -- VIEW
 
 
@@ -61,7 +84,31 @@ view model =
         [ h2 [] [ text "Dyck Tests" ]
         , textarea [ onInput ParseInput, placeholder "Enter expression", value model.input ] []
         , div [] [ text ("Result: " ++ model.output), div [ Html.Attributes.id "result" ] [] ]
+        , div []
+            [ text "Stack: "
+            , ul [] (List.map (\item -> li [] [ text (parenthesisToString item) ]) model.stack)
+            ]
         ]
+
+
+stackView : List Parenthesis -> Html Msg
+stackView stack =
+    ul [] (List.map renderItem stack)
+
+
+renderItem : Parenthesis -> Html Msg
+renderItem item =
+    li [] [ text (parenthesisToString item) ]
+
+
+parenthesisToString : Parenthesis -> String
+parenthesisToString paren =
+    case paren of
+        OpenBracket ->
+            "("
+
+        CloseBracket ->
+            ")"
 
 
 type Parenthesis
@@ -92,17 +139,21 @@ pop state =
 
 updateState : Parenthesis -> State -> State
 updateState bracket state =
-    case bracket of
-        OpenBracket ->
-            push OpenBracket state
+    let
+        newState =
+            case bracket of
+                OpenBracket ->
+                    push OpenBracket state
 
-        CloseBracket ->
-            case state.stack of
-                [] ->
-                    { state | isValid = False }
+                CloseBracket ->
+                    case state.stack of
+                        [] ->
+                            { state | isValid = False }
 
-                _ :: rest ->
-                    pop state
+                        _ :: rest ->
+                            pop state
+    in
+    Debug.log "New State" newState
 
 
 isDyck : List Parenthesis -> Bool
