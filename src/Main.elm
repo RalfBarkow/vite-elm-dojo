@@ -1,4 +1,4 @@
-module Main exposing (..)
+module Main exposing (Parenthesis(..), isDyck)
 
 import Browser
 import Html exposing (..)
@@ -65,10 +65,6 @@ view model =
 
 
 type Parenthesis
-    = RoundBracket
-
-
-type RoundBracket
     = OpenBracket
     | CloseBracket
 
@@ -97,8 +93,11 @@ pop state =
 updateState : Parenthesis -> State -> State
 updateState bracket state =
     case bracket of
-        RoundBracket ->
-            push RoundBracket state
+        OpenBracket ->
+            push OpenBracket state
+
+        CloseBracket ->
+            push OpenBracket state
 
 
 isDyck : List Parenthesis -> Bool

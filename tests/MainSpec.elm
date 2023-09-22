@@ -1,7 +1,7 @@
 module MainSpec exposing (..)
 
 import Expect exposing (..)
-import Main exposing (Parenthesis(..), RoundBracket(..), isDyck)
+import Main exposing (Parenthesis(..), isDyck)
 import Test exposing (..)
 
 
