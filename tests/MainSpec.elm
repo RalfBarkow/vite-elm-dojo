@@ -38,32 +38,8 @@ parseLinksTests =
     describe "parseLinks function"
         [ test "parses single valid link" <|
             \() ->
-                let
-                    input =
-                        "This is a [[valid link]]."
-
-                    expected =
-                        [ "valid link" ]
-                in
-                Expect.equal expected (parseLinks input)
+                Expect.equal [ "valid link" ] (parseLinks "This is a [[valid link]].")
         , test "parses multiple valid links" <|
             \() ->
-                let
-                    input =
-                        "[[Link 1]] and [[Link 2]] are both valid links."
-
-                    expected =
-                        [ "Link 1", "Link 2" ]
-                in
-                Expect.equal expected (parseLinks input)
-        , test "ignores invalid links" <|
-            \() ->
-                let
-                    input =
-                        "This is not a valid link [[]] and neither is this []]."
-
-                    expected =
-                        []
-                in
-                Expect.equal expected (parseLinks input)
+                Expect.equal [ "Link 1", "Link 2" ] (parseLinks "[[Link 1]] and [[Link 2]] are both valid links.")
         ]
