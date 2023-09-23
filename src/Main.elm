@@ -181,7 +181,9 @@ parseLinks text =
             "]]"
 
         findLinks =
-            String.split (prefix ++ suffix) >> List.filter (\s -> String.contains prefix s && String.contains suffix s)
+            String.split (prefix ++ suffix)
+                >> List.filter (\s -> String.contains prefix s && String.contains suffix s)
+                >> List.map (String.slice (String.length prefix) (String.length suffix) >> String.trim)
     in
     text
         |> findLinks
