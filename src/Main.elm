@@ -1,4 +1,4 @@
-module Main exposing (Parenthesis(..), isDyck)
+module Main exposing (Parenthesis(..), isDyck, parseLinks)
 
 import Browser
 import Html exposing (..)
@@ -169,3 +169,19 @@ isDyck input =
             List.foldr updateState initState input
     in
     List.isEmpty state.stack && state.isValid
+
+
+parseLinks : String -> List String
+parseLinks text =
+    let
+        prefix =
+            "[["
+
+        suffix =
+            "]]"
+
+        findLinks =
+            String.split (prefix ++ suffix) >> List.filter (\s -> String.contains prefix s && String.contains suffix s)
+    in
+    text
+        |> findLinks
