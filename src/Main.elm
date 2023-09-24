@@ -174,20 +174,9 @@ isDyck input =
 parseLinks : String -> List String
 parseLinks text =
     let
-        prefix : String
-        prefix =
-            "[["
-
-        suffix : String
-        suffix =
-            "]]"
-
         findLinks : String -> List String
         findLinks =
-            String.split (prefix ++ suffix)
-
-        --  >> List.filter (\s -> String.contains prefix s && String.contains suffix s)
-        --  >> List.map (String.slice (String.length prefix) (String.length suffix) >> String.trim)
+            String.split "[["
     in
     text
         |> findLinks
