@@ -15,8 +15,8 @@ import Peg
 grammarString : String
 grammarString =
     """
-    start <- <digit+> {action}
-    digit <- [0-9]    
+    start <- <char+> {action}
+    char <- [a-z]    
     """
 
 
@@ -26,14 +26,14 @@ result : Result Error String
 result =
     let
         actions _ found _ =
-            Ok found
+            Ok (String.toUpper found)
 
         predicate _ _ state =
             ( True, state )
     in
     grammarString
         |> fromString
-        |> Result.andThen (\grammar -> parse grammar "" actions predicate "123")
+        |> Result.andThen (\grammar -> parse grammar "" actions predicate "abc")
 
 
 {-| Check if the parse succeeded
