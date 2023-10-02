@@ -173,10 +173,10 @@ isDyck input =
 
 parseLinks : String -> List String
 parseLinks text =
-    let
-        findLinks : String -> List String
-        findLinks =
-            String.split "[["
-    in
     text
         |> findLinks
+
+
+findLinks : String -> List String
+findLinks =
+    String.split "[["
