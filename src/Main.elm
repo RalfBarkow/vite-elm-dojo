@@ -38,6 +38,7 @@ result =
 
 {-| Check if the parse succeeded
 -}
+main : Html.Html msg
 main =
     case result of
         Ok value ->
