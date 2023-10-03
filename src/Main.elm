@@ -45,4 +45,4 @@ main =
             Html.text ("Parsed value: " ++ value)
 
         Err error ->
-            Html.text ("Parse error: " ++ error.message)
+            Html.text ("Parse error: " ++ error.message ++ " at position " ++ String.fromInt error.position)
