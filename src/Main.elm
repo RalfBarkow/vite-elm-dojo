@@ -15,20 +15,20 @@ import Peg
 grammarString : String
 grammarString =
     """
-Grammar <-- ws* Value ws*
+Grammar <- ws* Value ws*
 
 Value    <- ws* (Object / Array / Number / String 
           / True / False / Null) ws*
 
-Object  <-- '{' ws* Member (ws* ',' ws* Member)* ws* '}'
-Array   <-- '[' ws* Value (ws* ',' ws* Value)* ws* ']'
-Number  <-- MINUS? Integer (DOT DIGIT+)? ('e' / 'E') sign DIGIT+ 
-String  <-- DQ (Escaped / [x20-x21] / [x23-x5B] / [x5D-x10FFFF])* DQ
-True    <-- 'true'
-False   <-- 'false'
-Null    <-- 'null'
+Object  <- '{' ws* Member (ws* ',' ws* Member)* ws* '}'
+Array   <- '[' ws* Value (ws* ',' ws* Value)* ws* ']'
+Number  <- MINUS? Integer (DOT DIGIT+)? ('e' / 'E') sign DIGIT+ 
+String  <- DQ (Escaped / [x20-x21] / [x23-x5B] / [x5D-x10FFFF])* DQ
+True    <- 'true'
+False   <- 'false'
+Null    <- 'null'
 
-Member  <-- String ':' Value
+Member  <- String ':' Value
 Integer  <- '0' / [1-9] DIGIT*
 Escaped  <- BKSLASH ('b' / 'f' / 'n' / 'r' / 't' / 'u' hex{4}
           / DQ / BKSLASH / SLASH)
@@ -48,7 +48,7 @@ result =
     in
     grammarString
         |> fromString
-        |> Result.andThen (\grammar -> parse grammar "" actions predicate "abc")
+        |> Result.andThen (\grammar -> parse grammar "" actions predicate "{}")
 
 
 {-| Check if the parse succeeded
