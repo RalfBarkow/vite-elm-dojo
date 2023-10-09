@@ -16,7 +16,7 @@ grammarString : String
 grammarString =
     """
     start <- <char+> {action}
-    char <- [a-z]        
+    char <- [a-z]
     """
 
 
