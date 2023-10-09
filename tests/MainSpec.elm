@@ -7,7 +7,7 @@ import Test exposing (..)
 
 suite : Test
 suite =
-    describe "Parsing Expression Grammar (PEG)"
+    describe "textWithoutLink"
         [ test "should parse 'abc' and convert it to all upper case 'ABC' with an action." <|
             \() ->
                 let
