@@ -1,39 +1,38 @@
-module Main exposing (grammarString, main, result)
+module Main exposing (result)
 
 import Html
-import Peg
-    exposing
-        ( Actions
-        , Error
-        , Grammar
-        , Predicate
-        , fromString
-        , parse
-        )
+import Parser exposing ((|.), Parser, andThen, chompUntil, getChompedString)
 
 
-grammarString : String
-grammarString =
-    """
-    start <- <char+> {action}
-    char <- [a-z]
-    """
+textWithoutLink : Parser String
+textWithoutLink =
+    chompUntil "["
+        |> getChompedString
+
+
+
+-- |> andThen checkLink
+
+
+checkLink : String -> a
+checkLink =
+    Debug.todo
 
 
 {-| Parse a string with the grammar
 -}
-result : Result Error String
+result : Result (List Parser.DeadEnd) String
 result =
     let
-        actions _ found _ =
-            Ok (String.toUpper found)
-
-        predicate _ _ state =
-            ( True, state )
+        str =
+            "This is an Internal Link: [[Federated Wiki]]"
     in
-    grammarString
-        |> fromString
-        |> Result.andThen (\grammar -> parse grammar "" actions predicate "abc")
+    Parser.run textWithoutLink str
+
+
+run : String -> Result (List Parser.DeadEnd) String
+run str =
+    Parser.run textWithoutLink str
 
 
 {-| Check if the parse succeeded
@@ -45,4 +44,4 @@ main =
             Html.text ("Parsed value: " ++ value)
 
         Err error ->
-            Html.text ("Parse error: " ++ error.message ++ " at position " ++ String.fromInt error.position)
+            Html.text ("Parse error: " ++ Debug.toString error)

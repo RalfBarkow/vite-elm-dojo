@@ -8,11 +8,11 @@ import Test exposing (..)
 suite : Test
 suite =
     describe "textWithoutLink"
-        [ test "should parse 'abc' and convert it to all upper case 'ABC' with an action." <|
+        [ test "should chompUntil [ |> getChompedString |> andThen checkLink if internal or external" <|
             \() ->
                 let
                     expected =
-                        Ok "ABC"
+                        Ok "Federated Wiki"
 
                     actual =
                         result
