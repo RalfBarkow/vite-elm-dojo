@@ -414,32 +414,6 @@ parse str =
     Parser.run paragraphText str
 
 
-lookAhead : Parser a -> Parser ()
-lookAhead parser =
-    {- How to build interesting parsers
-       Ref: https://discourse.elm-lang.org/t/how-to-build-interesting-parsers/8786
-
-       Demystifying an Obscure LookAhead Parser
-       Ref: https://discourse.elm-lang.org/t/demystifying-an-obscure-lookahead-parser/9295
-    -}
-    Parser.oneOf
-        [ Parser.oneOf
-            [ parser
-                |> Parser.backtrackable
-                |> Parser.andThen (\_ -> Parser.commit ())
-                |> Parser.andThen (\_ -> Parser.problem "")
-            , Parser.succeed
-                (parser
-                    |> Parser.backtrackable
-                    |> Parser.map (\_ -> ())
-                )
-            ]
-            |> Parser.backtrackable
-        , Parser.succeed (Parser.succeed ())
-        ]
-        |> Parser.andThen identity
-
-
 renderWikiLink : String -> Html msg
 renderWikiLink title =
     let
