@@ -1,12 +1,61 @@
 module Main exposing (result)
 
 import Html
-import Parser exposing ((|.), (|=), Parser, andThen, chompUntil, getChompedString, oneOf, symbol)
+import Parser
+    exposing
+        ( (|.)
+        , (|=)
+        , DeadEnd
+        , Nestable(..)
+        , Parser
+        , Problem(..)
+        , Step(..)
+        , Trailing(..)
+        , andThen
+        , backtrackable
+        , chompIf
+        , chompUntil
+        , chompUntilEndOr
+        , chompWhile
+        , commit
+        , deadEndsToString
+        , end
+        , float
+        , getChompedString
+        , getCol
+        , getIndent
+        , getOffset
+        , getPosition
+        , getRow
+        , getSource
+        , int
+        , keyword
+        , lazy
+        , lineComment
+        , loop
+        , map
+        , mapChompedString
+        , multiComment
+        , number
+        , oneOf
+        , problem
+        , run
+        , sequence
+        , spaces
+        , succeed
+        , symbol
+        , token
+        , variable
+        , withIndent
+        )
 
 
 textParagraph : Parser String
 textParagraph =
     Parser.oneOf
+        {- textOrLink https://wiki.ralfbarkow.ch/view/2023-10-10
+           Instead of a oneOf list, you will say try to parse it as text or link.
+        -}
         [ internalLink
         , textWithoutLink
         , char
