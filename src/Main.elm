@@ -1,7 +1,21 @@
 module Main exposing (result)
 
 import Html
-import Parser exposing ((|.), Parser, andThen, chompUntil, getChompedString)
+import Parser exposing ((|.), Parser, andThen, chompUntil, getChompedString, oneOf, symbol)
+
+
+textParagraph : Parser String
+textParagraph =
+    Parser.oneOf
+        [ textWithoutLink
+        , char
+        ]
+
+
+char : Parser String
+char =
+    Parser.chompUntilEndOr "\n"
+        |> Parser.getChompedString
 
 
 textWithoutLink : Parser String
@@ -19,7 +33,15 @@ checkLink =
     Debug.todo
 
 
-{-| Parse a string with the grammar
+{-| Left Square Bracket
+-}
+link : Parser ()
+link =
+    symbol "["
+        |. chompUntil "]"
+
+
+{-| Parse a string
 -}
 result : Result (List Parser.DeadEnd) String
 result =
@@ -27,12 +49,7 @@ result =
         str =
             "This is an Internal Link: [[Federated Wiki]]"
     in
-    Parser.run textWithoutLink str
-
-
-run : String -> Result (List Parser.DeadEnd) String
-run str =
-    Parser.run textWithoutLink str
+    Parser.run textParagraph str
 
 
 {-| Check if the parse succeeded
