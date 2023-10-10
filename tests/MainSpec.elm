@@ -8,7 +8,7 @@ import Test exposing (..)
 suite : Test
 suite =
     describe "textWithoutLink"
-        [ test "should chompUntil [ |> getChompedString |> andThen checkLink if internal or external" <|
+        [ test "should parse text before link andThen check if internal or external link" <|
             \() ->
                 let
                     expected =
