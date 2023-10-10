@@ -1,15 +1,29 @@
 module Main exposing (result)
 
 import Html
-import Parser exposing ((|.), Parser, andThen, chompUntil, getChompedString, oneOf, symbol)
+import Parser exposing ((|.), (|=), Parser, andThen, chompUntil, getChompedString, oneOf, symbol)
 
 
 textParagraph : Parser String
 textParagraph =
     Parser.oneOf
-        [ textWithoutLink
+        [ internalLink
+        , textWithoutLink
         , char
         ]
+
+
+internalLink : Parser String
+internalLink =
+    {- Links are enclosed in doubled square brackets
+
+       Ref: Wikilinks (internal links) https://en.wikipedia.org/wiki/Help:Link
+       and http://ward.bay.wiki.org/view/internal-link
+    -}
+    Parser.succeed identity
+        |. Parser.symbol "[["
+        |= (Parser.getChompedString <| Parser.chompWhile (\c -> c /= ']'))
+        |. Parser.symbol "]]"
 
 
 char : Parser String
@@ -47,7 +61,7 @@ result : Result (List Parser.DeadEnd) String
 result =
     let
         str =
-            "This is an Internal Link: [[Federated Wiki]]"
+            "[[Federated Wiki]]"
     in
     Parser.run textParagraph str
 
